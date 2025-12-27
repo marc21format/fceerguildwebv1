@@ -1,0 +1,16 @@
+- barangays
+- committees
+- cities
+- degree_fields
+- degree_levels
+- degree_types
+- fields_of_work
+- highschool_subjects
+- highschools
+- positions
+- provinces
+- rooms
+- user_attendance_statuses
+- user_roles
+- universities
+- volunteer_subjects
