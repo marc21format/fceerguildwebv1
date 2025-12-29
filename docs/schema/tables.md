@@ -26,7 +26,7 @@ attendance_record_excuse_letter
 - profile_pictures
 - professional_credentials
 - provinces
-- rooms
+- classrooms
 - review_seasons
 - student_excuse_letters
 - suffix_titles

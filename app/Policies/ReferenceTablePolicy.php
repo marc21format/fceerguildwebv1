@@ -14,7 +14,6 @@ class ReferenceTablePolicy
         $allowed = [
             'System Manager',
             'Executive',
-            'Administrator',
         ];
 
         $roleName = $user->role?->name ?? null;

@@ -7,7 +7,7 @@
                     <flux:heading size="lg">{{ $selectedId ? 'Edit' : 'Create' }}</flux:heading>
                 </div>
 
-                @include('livewire.reference._form-fields', ['fields' => $fields])
+                @include('livewire.reference.modal._form-fields', ['fields' => $fields])
 
                 <div class="flex justify-end space-x-2">
                     <flux:button wire:click="save" variant="primary">Save</flux:button>

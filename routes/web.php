@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use Livewire\Volt\Volt;
+use App\Models\User as ProfileUser;
 
 Route::get('/', function () {
     return view('welcome');
@@ -30,33 +31,96 @@ Route::middleware(['auth'])->group(function () {
         )
         ->name('two-factor.show');
         
+    // Profile routes
+    // support optional section path like /profile/{user}/credentials to mirror settings behavior
+
+    Route::get('profile/{user}/{section?}', function (ProfileUser $user, $section = null) {
+        return view('profile', compact('user', 'section'));
+    })
+        ->middleware('can:manage,user')
+        ->name('profile.show.section');
+
+    Route::get('profile/{user}', function (ProfileUser $user) {
+        return view('profile', compact('user'));
+    })
+        ->middleware('can:manage,user')
+        ->name('profile.show.other');
+
+    Route::view('profile', 'profile')->name('profile.show');
+        
     Route::view('database/provinces', 'pages.reference_tables.provinces')
         ->middleware(['auth'])
-        ->name('database.provinces');
-    Route::view('database/cities', 'pages.database.cities')
+        ->name('pages.reference_tables.provinces');
+    Route::view('database/cities', 'pages.reference_tables.cities')
         ->middleware(['auth'])
-        ->name('database.cities');
-    Route::view('database/barangays', 'pages.database.barangays')
+        ->name('pages.reference_tables.cities');
+    Route::view('database/barangays', 'pages.reference_tables.barangays')
         ->middleware(['auth'])
-        ->name('database.barangays');
+        ->name('pages.reference_tables.barangays');
     Route::view('database', 'database')
         ->middleware(['auth'])
         ->name('database');
-    Route::view('database/degree_fields', 'pages.database.degree_fields')
+    Route::view('database/degree_fields', 'pages.reference_tables.degree_fields')
         ->middleware(['auth'])
-        ->name('database.degree_fields');
-    Route::view('database/degree_levels', 'pages.database.degree_levels')
+        ->name('pages.reference_tables.degree_fields');
+    Route::view('database/degree_levels', 'pages.reference_tables.degree_levels')
         ->middleware(['auth'])
-        ->name('database.degree_levels');
-    Route::view('database/degree_programs', 'pages.database.degree_programs')
+        ->name('pages.reference_tables.degree_levels');
+    Route::view('database/degree_programs', 'pages.reference_tables.degree_programs')
         ->middleware(['auth'])
-        ->name('database.degree_programs');
-    Route::view('database/degree_types', 'pages.database.degree_types')
+        ->name('pages.reference_tables.degree_programs');
+    Route::view('database/degree_types', 'pages.reference_tables.degree_types')
         ->middleware(['auth'])
-        ->name('database.degree_types');
-    Route::view('database/universities', 'pages.database.universities')
+        ->name('pages.reference_tables.degree_types');
+    Route::view('database/universities', 'pages.reference_tables.universities')
         ->middleware(['auth'])
-        ->name('database.universities');
+        ->name('pages.reference_tables.universities');
+
+    Route::view('database/highschools', 'pages.reference_tables.highschools')
+        ->middleware(['auth'])
+        ->name('pages.reference_tables.highschools');
+    Route::view('database/highschool_subjects', 'pages.reference_tables.highschool_subjects')
+        ->middleware(['auth'])
+        ->name('pages.reference_tables.highschool_subjects');
+    Route::view('database/fields_of_work', 'pages.reference_tables.fields_of_work')
+        ->middleware(['auth'])
+        ->name('pages.reference_tables.fields_of_work');
+    Route::view('database/prefix_titles', 'pages.reference_tables.prefix_titles')
+        ->middleware(['auth'])
+        ->name('pages.reference_tables.prefix_titles');
+    Route::view('database/suffix_titles', 'pages.reference_tables.suffix_titles')
+        ->middleware(['auth'])
+        ->name('pages.reference_tables.suffix_titles');
+
+    // Newly added reference pages
+    Route::view('database/volunteer_subjects', 'pages.reference_tables.volunteer_subjects')
+        ->middleware(['auth'])
+        ->name('pages.reference_tables.volunteer_subjects');
+    Route::view('database/positions', 'pages.reference_tables.committee_positions')
+        ->middleware(['auth'])
+        ->name('pages.reference_tables.committee_positions');
+    Route::view('database/committees', 'pages.reference_tables.committees')
+        ->middleware(['auth'])
+        ->name('pages.reference_tables.committees');
+    Route::view('database/classrooms', 'pages.reference_tables.classrooms')
+        ->middleware(['auth'])
+        ->name('pages.reference_tables.classrooms');
+    Route::view('database/classroom_positions', 'pages.reference_tables.classroom_positions')
+        ->middleware(['auth'])
+        ->name('pages.reference_tables.classroom_positions');
+
+    Route::view('database/review_seasons', 'pages.reference_tables.review_seasons')
+        ->middleware(['auth'])
+        ->name('pages.reference_tables.review_seasons');
+    Route::view('database/fceer_batches', 'pages.reference_tables.fceer_batches')
+        ->middleware(['auth'])
+        ->name('pages.reference_tables.fceer_batches');
+    Route::view('database/user_attendance_statuses', 'pages.reference_tables.user_attendance_statuses')
+        ->middleware(['auth'])
+        ->name('pages.reference_tables.user_attendance_statuses');
+    Route::view('database/user_roles', 'pages.reference_tables.user_roles')
+        ->middleware(['auth'])
+        ->name('pages.reference_tables.user_roles');
 
     // Reference exports (CSV / XLSX)
     Route::get('references/export', [\App\Http\Controllers\ReferenceExportController::class, 'export'])

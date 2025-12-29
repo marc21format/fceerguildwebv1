@@ -125,10 +125,7 @@ class ReferenceFormModal extends Component
 
     public function render()
     {
-        // ensure resolvedFields is available for the view
-        $resolver = app(ReferenceFieldOptionResolver::class);
-        $this->resolvedFields = $resolver->resolve($this->rawFields ?: $this->fields);
-
+        // resolvedFields should already be populated in mount/create/edit
         return view('livewire.reference.modal.form-modal', ['fields' => $this->resolvedFields]);
     }
 
@@ -138,13 +135,5 @@ class ReferenceFormModal extends Component
         return $resolver->resolve($source);
     }
 
-    private function sanitizeFields(array $fields): array
-    {
-        return collect($fields)->map(function ($f) {
-            if (isset($f['options']) && is_callable($f['options'])) {
-                $f['options'] = [];
-            }
-            return $f;
-        })->toArray();
-    }
+    // Field sanitization delegated to `ReferenceFieldSanitizer` service when needed.
 }

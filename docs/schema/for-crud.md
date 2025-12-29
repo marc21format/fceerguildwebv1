@@ -9,7 +9,7 @@
 - highschools
 - positions
 - provinces
-- rooms
+- classrooms
 - user_attendance_statuses
 - user_roles
 - universities

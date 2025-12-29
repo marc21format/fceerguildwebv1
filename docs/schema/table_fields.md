@@ -242,7 +242,7 @@ deleted_at timestamp
 - profile_pictures
 - professional_credentials
 - provinces
-- rooms
+- classrooms
 - review_seasons
 - student_excuse_letters
 - suffix_titles

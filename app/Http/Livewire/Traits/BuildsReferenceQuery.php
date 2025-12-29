@@ -1,19 +1,43 @@
 <?php
 
 namespace App\Http\Livewire\Traits;
-use Illuminate\Support\Str;
 
+use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Builder;
+
+/**
+ * Build a query for reference tables with optional search and filters.
+ *
+ * Consuming component must provide:
+ * - public string $modelClass
+ * - public array $fields (each field an array with at least 'key')
+ * - public string $search
+ * - public array $filters (optional)
+ * - public string $sort
+ * - public string $direction
+ */
 trait BuildsReferenceQuery
 {
-    protected function buildQuery()
+    /**
+     * Build and return an Eloquent query builder.
+     *
+     * @return Builder
+     */
+    protected function buildQuery(array $fields = null): Builder
     {
-        $query = ($this->modelClass)::query();
-        $model = new $this->modelClass;
+        $modelClass = $this->modelClass;
+        $query = ($modelClass)::query();
+        $model = new $modelClass;
         $table = $model->getTable();
+
+        // Local copy to avoid repeated property access. If a specific set of
+        // fields was provided (for visible fields), use that to determine
+        // relations and allowed keys; otherwise fall back to configured fields.
+        $fields = $fields ?? ($this->fields ?? []);
 
         // Eager-load relations referenced by fields that end with _id
         $relations = [];
-        foreach ($this->fields ?? [] as $f) {
+        foreach ($fields as $f) {
             $key = $f['key'] ?? null;
             if (! is_string($key)) {
                 continue;
@@ -23,6 +47,7 @@ trait BuildsReferenceQuery
                 $base = substr($key, 0, -3);
                 $camel = Str::camel($base);
 
+                // Heuristic: prefer explicit relation method name if it exists.
                 if (method_exists($model, $base)) {
                     $relations[] = $base;
                 } elseif (method_exists($model, $camel)) {
@@ -36,43 +61,64 @@ trait BuildsReferenceQuery
             $query->with($relations);
         }
 
+        // Build an allowlist of field keys from configured fields to avoid
+        // using untrusted identifiers in raw SQL or orderBy.
+        $allowedKeys = collect($fields)->pluck('key')->filter()->values()->toArray();
+
+        // Prepare normalized qualified column names for allowed keys (table.key)
+        $qualifiedMap = [];
+        foreach ($allowedKeys as $k) {
+            // Only include string keys
+            if (! is_string($k)) {
+                continue;
+            }
+            $qualifiedMap[$k] = "{$table}.{$k}";
+        }
+
         $search = trim($this->search ?? '');
         if ($search !== '') {
             $lower = mb_strtolower($search);
+            $originalSearch = $search;
 
-            $query->where(function ($q) use ($lower, $table) {
-                foreach ($this->fields as $f) {
+            $query->where(function ($q) use ($lower, $query, $fields, $qualifiedMap, $originalSearch) {
+                foreach ($fields as $f) {
                     $type = $f['type'] ?? 'text';
                     $searchable = $f['searchable'] ?? in_array($type, ['text', 'string']);
                     if (! $searchable) {
                         continue;
                     }
 
-                    $col = $f['key'];
-                    $qualified = "{$table}.{$col}";
+                    $col = $f['key'] ?? null;
+                    if (! is_string($col) || ! isset($qualifiedMap[$col])) {
+                        continue;
+                    }
 
                     try {
+                        // Qualify column safely using the query builder so the
+                        // connection grammar wraps identifiers correctly.
+                        $qualified = $query->qualifyColumn($col);
                         $q->orWhereRaw("LOWER(COALESCE({$qualified},'')) LIKE ?", ["%{$lower}%"]);
                     } catch (\Throwable $e) {
-                        // Fallback to simpler where in case raw is not supported for this DB
-                        $q->orWhere($col, 'like', "%{$search}%");
+                        // Fallback to a simple where like with the raw column name (unqualified).
+                        \Log::debug('BuildsReferenceQuery: raw search failed, falling back', ['column' => $col, 'error' => $e->getMessage()]);
+                        $q->orWhere($col, 'like', "%{$originalSearch}%");
                     }
                 }
             });
         }
 
-        // Apply filters if present
+        // Apply filters if present (only allowed fields)
         if (! empty($this->filters ?? [])) {
             foreach ($this->filters as $flt) {
                 $field = $flt['field'] ?? null;
                 $op = $flt['op'] ?? 'contains';
                 $value = $flt['value'] ?? null;
 
-                if (empty($field)) {
+                if (empty($field) || ! is_string($field) || ! isset($qualifiedMap[$field])) {
                     continue;
                 }
 
-                $qualified = "{$table}.{$field}";
+                $qualified = $qualifiedMap[$field];
 
                 switch ($op) {
                     case 'contains':
@@ -94,15 +140,18 @@ trait BuildsReferenceQuery
                         $query->where($qualified, '<', $value);
                         break;
                     case 'between':
-                        // expect comma-separated two values
                         if (is_string($value) && strpos($value, ',') !== false) {
                             [$a, $b] = array_map('trim', explode(',', $value, 2));
-                            $query->whereBetween($qualified, [$a, $b]);
+                            if ($a !== '' && $b !== '') {
+                                $query->whereBetween($qualified, [$a, $b]);
+                            }
                         }
                         break;
                     case 'in':
-                        $vals = is_array($value) ? $value : array_map('trim', explode(',', (string) $value));
-                        $query->whereIn($qualified, $vals);
+                        $vals = is_array($value) ? $value : array_filter(array_map('trim', explode(',', (string) $value)), fn($v) => $v !== '');
+                        if (! empty($vals)) {
+                            $query->whereIn($qualified, $vals);
+                        }
                         break;
                     case 'is_null':
                         $query->whereNull($qualified);
@@ -117,6 +166,18 @@ trait BuildsReferenceQuery
             }
         }
 
-        return $query->orderBy($this->sort, $this->direction);
+        // Sanitize sort and direction
+        $sort = $this->sort ?? 'id';
+        $direction = strtolower($this->direction ?? 'desc') === 'asc' ? 'asc' : 'desc';
+
+        // Only allow sorting by configured keys; otherwise default to id.
+        if (! is_string($sort) || ! isset($qualifiedMap[$sort])) {
+            $sort = 'id';
+            // if id is not in qualifiedMap, qualify fallback to table.id
+        }
+
+        $orderColumn = isset($qualifiedMap[$sort]) ? $qualifiedMap[$sort] : "{$table}.id";
+
+        return $query->orderBy($orderColumn, $direction);
     }
 }

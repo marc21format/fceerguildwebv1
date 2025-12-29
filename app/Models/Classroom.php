@@ -6,28 +6,20 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Room extends Model
+class Classroom extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'rooms';
+    protected $table = 'classrooms';
 
     protected $fillable = [
         'name',
-        'adviser_id',
-        'co_adviser_id',
-        'president_id',
-        'secretary_id',
         'created_by_id',
         'updated_by_id',
         'batch_id',
     ];
 
     protected $casts = [
-        'adviser_id' => 'integer',
-        'co_adviser_id' => 'integer',
-        'president_id' => 'integer',
-        'secretary_id' => 'integer',
         'batch_id' => 'integer',
     ];
 

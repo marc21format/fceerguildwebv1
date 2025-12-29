@@ -6,11 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Position extends Model
+class ClassroomPosition extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'positions';
+    protected $table = 'classroom_positions';
 
     protected $fillable = [
         'name',
@@ -27,10 +27,5 @@ class Position extends Model
     public function updatedBy()
     {
         return $this->belongsTo(User::class, 'updated_by_id');
-    }
-
-    public function committeeMembers()
-    {
-        return $this->hasMany(CommitteeMember::class, 'position_id');
     }
 }

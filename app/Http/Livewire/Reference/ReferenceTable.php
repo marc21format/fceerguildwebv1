@@ -7,10 +7,15 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use App\Http\Livewire\Traits\BuildsReferenceQuery;
 use App\Http\Livewire\Traits\SelectRows;
-use Illuminate\Support\Str;
 use App\Services\ReferenceFieldOptionResolver;
 use App\Services\ReferenceDisplayFormatter;
 
+/**
+ * Table component for reference data.
+ *
+ * Resolved fields are stored as a public property so Livewire will persist
+ * them across requests and avoid repeated resolution on every render.
+ */
 class ReferenceTable extends Component
 {
     use WithPagination;
@@ -26,7 +31,7 @@ class ReferenceTable extends Component
     public array $filters = [];
     public ?string $filterField = null;
     public string $filterOperator = 'contains';
-    public $filterValue = null;
+    public ?string $filterValue = null;
     public string $view = 'rows';
     public bool $readOnly = false;
     protected array $rawFields = [];
@@ -35,6 +40,26 @@ class ReferenceTable extends Component
     public string $sort = 'id';
     public string $direction = 'desc';
     public int $perPage = 15;
+
+    /**
+     * Resolved fields with options populated. Public so Livewire will persist it.
+     * @var array
+     */
+    public array $resolvedFields = [];
+
+    /**
+     * Hash of the raw fields config used to detect external changes across
+     * Livewire requests. Public so Livewire will persist it between requests.
+     * @var string|null
+     */
+    public ?string $rawFieldsHash = null;
+
+    /**
+     * Cache of IDs for the currently-rendered page to avoid duplicate
+     * pagination queries within the same request.
+     * @var string[]
+     */
+    protected array $lastPageIds = [];
 
     // Row selection for bulk actions
     /**
@@ -55,6 +80,7 @@ class ReferenceTable extends Component
         'savedReference' => '$refresh',
         'refreshReferenceTable' => 'handleRefresh',
         'refreshReferenceArchive' => 'handleRefresh',
+        'referenceOptionsUpdated' => 'handleReferenceOptionsUpdated',
         // Events emitted by ReferenceToolbar
         'searchUpdated' => 'handleSearchUpdated',
         'filtersAdded' => 'handleFiltersAdded',
@@ -74,6 +100,20 @@ class ReferenceTable extends Component
         // Inform toolbar of current filters and selection so UI stays in sync after external actions
         $this->emit('setFilters', $this->filters);
         $this->emit('setSelected', $this->selected ?? []);
+        // ensure options are fresh after external changes
+        $this->refreshResolvedFields();
+    }
+    
+    public function hydrate(): void
+    {
+        $current = config('reference-tables.' . $this->configKey, []);
+        $hash = md5(json_encode($current));
+        if ($this->rawFieldsHash !== $hash) {
+            $this->rawFields = $current;
+            $this->fields = app(\App\Services\ReferenceFieldSanitizer::class)->sanitize($this->rawFields);
+            $this->refreshResolvedFields();
+            $this->rawFieldsHash = $hash;
+        }
     }
 
     public function mount($modelClass = null, $configKey = null, $view = 'rows', $readOnly = false)
@@ -83,11 +123,28 @@ class ReferenceTable extends Component
         $this->view = $view;
         $this->readOnly = (bool) $readOnly;
         $this->rawFields = config('reference-tables.' . $this->configKey, []);
-        $this->fields = $this->sanitizeFields($this->rawFields);
+        $this->fields = app(\App\Services\ReferenceFieldSanitizer::class)->sanitize($this->rawFields);
 
         // Initialize visibleFields to all configured field keys in order
         $keys = collect($this->fields)->pluck('key')->filter()->values()->toArray();
         $this->visibleFields = $keys;
+
+        // Pre-resolve options once on mount to avoid doing work on every render.
+        $this->refreshResolvedFields();
+
+        // Compute initial rawFieldsHash so hydrate can detect changes later
+        $this->rawFieldsHash = md5(json_encode($this->rawFields));
+    }
+
+    /**
+     * Recompute resolved fields from raw configuration using the resolver.
+     * Call this when `rawFields` or `configKey` changes externally.
+     */
+    public function refreshResolvedFields(): void
+    {
+        $source = ! empty($this->rawFields) ? $this->rawFields : $this->fields;
+        $resolver = app(ReferenceFieldOptionResolver::class);
+        $this->resolvedFields = $resolver->resolve($source);
     }
 
     /**
@@ -118,6 +175,8 @@ class ReferenceTable extends Component
     {
         $this->visibleFields = collect($this->fields)->pluck('key')->filter()->values()->toArray();
         $this->emit('setVisibleFields', $this->visibleFields);
+        // ensure options are fresh after external changes
+        $this->refreshResolvedFields();
     }
 
     // Filter methods are handled via toolbar events. Handlers below react to those events.
@@ -153,7 +212,15 @@ class ReferenceTable extends Component
         $this->emit('setFilters', $this->filters);
     }
 
-    
+    public function handleReferenceOptionsUpdated($payload = null): void
+    {
+        // If payload contains configKey, only refresh when it matches
+        if (is_array($payload) && isset($payload['configKey']) && $payload['configKey'] !== $this->configKey) {
+            return;
+        }
+
+        $this->refreshResolvedFields();
+    }
 
     public function setView(string $v)
     {
@@ -188,15 +255,15 @@ class ReferenceTable extends Component
 
     // selection delegated to SelectRows trait
 
-    // Selection behavior delegated to WithSelectableRows trait. Implement getSelectablePageIds().
+    // Selection behavior delegated to SelectRows trait. Implement getSelectablePageIds().
 
     protected function getSelectablePageIds(): array
     {
-        return $this->buildQuery()
-            ->paginate($this->perPage)
-            ->pluck('id')
-            ->map(fn($i) => (string) $i)
-            ->toArray();
+        if (! empty($this->lastPageIds)) {
+            return $this->lastPageIds;
+        }
+
+        return $this->buildQuery()->paginate($this->perPage)->pluck('id')->map(fn($i) => (string) $i)->toArray();
     }
 
     /**
@@ -253,29 +320,27 @@ class ReferenceTable extends Component
 
     public function render()
     {
-        // Use the framework's default paginator styling (Tailwind) so links
-        // match the archive modal styles.
-
-        // Reload configured fields from config to ensure consistent field metadata
         if (! empty($this->configKey)) {
             $this->rawFields = config('reference-tables.' . $this->configKey, []);
         }
-
-        // Resolve options via ReferenceFieldOptionResolver (handles callables and FK fallbacks)
         $source = ! empty($this->rawFields) ? $this->rawFields : $this->fields;
         $resolver = app(ReferenceFieldOptionResolver::class);
-        $resolvedFields = $resolver->resolve($source);
+        $resolvedFields = $this->resolvedFields ?: $resolver->resolve($source);
 
-        $paginator = $this->buildQuery()->paginate($this->perPage);
+        $visibleDefs = collect($resolvedFields)
+            ->filter(fn($f) => in_array($f['key'] ?? null, $this->visibleFields, true))
+            ->values()
+            ->toArray();
 
-        // Precompute display values per row and per field to keep Blade simple.
+        $paginator = $this->buildQuery($visibleDefs)->paginate($this->perPage);
+        $this->lastPageIds = $paginator->getCollection()->pluck('id')->map(fn($i) => (string) $i)->toArray();
         $displayValues = [];
         $collection = $paginator->getCollection();
         $formatter = app(ReferenceDisplayFormatter::class);
 
         foreach ($collection as $row) {
             $id = (string) $row->getKey();
-            foreach ($resolvedFields as $f) {
+            foreach ($visibleDefs as $f) {
                 $key = $f['key'] ?? null;
                 $displayValues[$id][$key] = $formatter->formatFieldValue($row, $f);
             }
@@ -288,13 +353,4 @@ class ReferenceTable extends Component
         ]);
     }
 
-    private function sanitizeFields(array $fields): array
-    {
-        return collect($fields)->map(function ($f) {
-            if (isset($f['options']) && is_callable($f['options'])) {
-                $f['options'] = [];
-            }
-            return $f;
-        })->toArray();
-    }
 }

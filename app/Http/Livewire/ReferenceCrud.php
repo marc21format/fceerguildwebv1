@@ -35,7 +35,7 @@ class ReferenceCrud extends Component
         $this->configKey = $configKey;
         if ($this->configKey) {
             $this->rawFields = config('reference-tables.' . $this->configKey) ?? [];
-            $this->fields = $this->sanitizeFields($this->rawFields);
+            $this->fields = app(\App\Services\ReferenceFieldSanitizer::class)->sanitize($this->rawFields);
         } else {
             $this->fields = $fields;
         }
@@ -85,13 +85,5 @@ class ReferenceCrud extends Component
         ]);
     }
 
-    private function sanitizeFields(array $fields): array
-    {
-        return collect($fields)->map(function ($f) {
-            if (isset($f['options']) && is_callable($f['options'])) {
-                $f['options'] = [];
-            }
-            return $f;
-        })->toArray();
-    }
+    // Field sanitization delegated to `ReferenceFieldSanitizer` service.
 }

@@ -7,10 +7,11 @@ use Spatie\Activitylog\Models\Activity;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use App\Services\ActivityLogger;
+use Masmerise\Toaster\Toastable;
 
 class ReferenceRestoreModal extends Component
 {
-    use \Masmerise\Toaster\Toastable;
+    use Toastable;
     public bool $open = false;
     public array $ids = [];
     public string $modelClass;

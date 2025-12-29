@@ -4,17 +4,18 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
-class CommitteeMember extends Model
+class CommitteeMembership extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
-    protected $table = 'committee_members';
+    protected $table = 'committee_memberships';
 
     protected $fillable = [
         'user_id',
         'committee_id',
-        'position_id',
+        'committee_position_id',
         'created_by_id',
         'updated_by_id',
     ];
@@ -29,8 +30,8 @@ class CommitteeMember extends Model
         return $this->belongsTo(Committee::class);
     }
 
-    public function position()
+    public function committeePosition()
     {
-        return $this->belongsTo(CommitteePosition::class, 'position_id');
+        return $this->belongsTo(CommitteePosition::class, 'committee_position_id');
     }
 }

@@ -23,7 +23,7 @@ This file lists the requested modules and a compact reference for their purpose,
 ## attendance_volunteer
 - Purpose: volunteer attendance admin and roster-linked attendance tracking.
 - Views / Livewire: `Attendance\Volunteers\Index`, `Attendance\Volunteers\Profile`.
-- Models: `AttendanceRecord`, `AttendanceAggregate`, `Committee`, `CommitteeMember`.
+- Models: `AttendanceRecord`, `AttendanceAggregate`, `Committee`, `CommitteeMembership`.
 - Policies / Permissions: `view-attendance` and `manage-attendance` for `volunteer_administrator`/`volunteer_executive`.
 - Endpoints: `/api/attendance/volunteers`, `/api/attendance/volunteers/aggregates`.
 - Notes: calculate `duration_minutes` for volunteer time-in/time-out records; audit all changes.
@@ -39,7 +39,7 @@ This file lists the requested modules and a compact reference for their purpose,
 ## roster_volunteers
 - Purpose: CRUD and roster listings for volunteers, including committee/subject assignments.
 - Views / Livewire: `Roster\Volunteers\Index`, `Roster\Volunteers\Form` (modal with dynamic assignment rows), `Roster\Volunteers\Profile`.
-- Models: `User` (role=volunteer), `UserProfile`, `Committee`, `CommitteeMember`, `VolunteerSubject`, `SubjectTeacher`.
+- Models: `User` (role=volunteer), `UserProfile`, `Committee`, `CommitteeMembership`, `VolunteerSubject`, `SubjectTeacher`.
 - Policies / Permissions: `manage-volunteers`, `manage-assignments` for `volunteer_administrator`/`volunteer_executive`.
 - Endpoints: `/api/rosters/volunteers`, `/api/rosters/volunteers/assignments`.
 - Notes: provide UI to add multiple committee/subject rows; centralize creation through `VolunteerService`.

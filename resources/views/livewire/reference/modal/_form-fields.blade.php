@@ -9,16 +9,25 @@
             <label class="block text-sm font-medium text-gray-700">{{ $field['label'] ?? ucfirst($key) }}</label>
             <textarea wire:model.defer="state.{{ $key }}" class="form-textarea mt-1 block w-full dark:bg-zinc-800 dark:text-gray-100"></textarea>
         @elseif(($field['type'] ?? '') === 'select')
-            @php
-                $selectedLabel = collect($field['options'] ?? [])->get($state[$key] ?? '', 'Select ' . ($field['label'] ?? ucfirst($key)));
-            @endphp
+                @php
+                    // Prefer resolved options passed in via $options (set by the modal component).
+                    // Fallback to $field['options'] only when it's an array.
+                    $selectOptions = [];
+                    if (isset($options) && is_array($options) && isset($options[$key]) && (is_array($options[$key]) || $options[$key] instanceof \Illuminate\Support\Collection)) {
+                        $selectOptions = (array) $options[$key];
+                    } elseif (isset($field['options']) && is_array($field['options'])) {
+                        $selectOptions = $field['options'];
+                    }
+
+                    $selectedLabel = collect($selectOptions)->get($state[$key] ?? '', 'Select ' . ($field['label'] ?? ucfirst($key)));
+                @endphp
             @if($field['label'])
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-100">{{ __($field['label'] ?? ucfirst($key)) }}</label>
             @endif
             <flux:dropdown class="w-full">
                 <flux:button icon:trailing="chevron-down" class="mt-1 w-full justify-start dark:text-gray-400">{{ $selectedLabel }}</flux:button>
                 <flux:menu>
-                    @foreach($field['options'] ?? [] as $val => $label)
+                    @foreach($selectOptions as $val => $label)
                         <flux:menu.item wire:click="setFieldValue('{{ $key }}', '{{ $val }}')">{{ $label }}</flux:menu.item>
                     @endforeach
                 </flux:menu>

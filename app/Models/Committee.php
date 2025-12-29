@@ -20,7 +20,7 @@ class Committee extends Model
 
     public function members()
     {
-        return $this->hasMany(CommitteeMember::class);
+        return $this->hasMany(CommitteeMembership::class);
     }
 
     public function createdBy()

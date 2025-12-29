@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class HighschoolSubjectRecord extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $table = 'highschool_subject_records';
 
@@ -16,8 +17,8 @@ class HighschoolSubjectRecord extends Model
     protected $fillable = [
         'user_id',
         'highschool_subject_id',
-        'highschool_record_id',
         'grade',
+        'highschool_record_id',
     ];
 
     protected $casts = [

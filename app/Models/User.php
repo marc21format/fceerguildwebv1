@@ -95,4 +95,44 @@ class User extends Authenticatable
     {
         return $this->hasMany(Attachment::class, 'uploaded_by_id');
     }
+
+    public function highschoolRecords()
+    {
+        return $this->hasMany(HighschoolRecord::class);
+    }
+
+    public function highschoolSubjectRecords()
+    {
+        return $this->hasMany(HighschoolSubjectRecord::class);
+    }
+
+    public function educationalRecords()
+    {
+        return $this->hasMany(EducationalRecord::class);
+    }
+
+    public function professionalCredentials()
+    {
+        return $this->hasMany(ProfessionalCredential::class);
+    }
+
+    public function committeeMemberships()
+    {
+        return $this->hasMany(CommitteeMembership::class);
+    }
+
+    public function subjectTeachers()
+    {
+        return $this->hasMany(SubjectTeacher::class);
+    }
+
+    public function classroomResponsibilities()
+    {
+        return $this->hasMany(ClassroomResponsibility::class);
+    }
+
+    public function fceerProfile()
+    {
+        return $this->hasOne(FceerProfile::class);
+    }
 }

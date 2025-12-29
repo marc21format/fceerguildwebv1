@@ -28,11 +28,11 @@ Recommended order: `highschools` -> `highschool_subjects` -> related records
 4) User/profile/roster lookups
 - `user_roles` — children: `users` (users.role_id)
 - `fceer_batches` — children: `fceer_profiles`, `user_profiles` (batch_id)
-- `rooms` — children: `fceer_profiles`, `user_profiles` (student_group_id)
+- `classrooms` — children: `fceer_profiles`, `user_profiles` (student_group_id)
 - `user_attendance_statuses` — children: `attendance_records`, `user_profiles` (status_id)
 - `review_seasons` — children: `attendance_records`
 
-Recommended order: `user_roles`, `fceer_batches`, `rooms`, `user_attendance_statuses`, `review_seasons`
+Recommended order: `user_roles`, `fceer_batches`, `classrooms`, `user_attendance_statuses`, `review_seasons`
 
 5) Attachment / media
 - `attachments` — referenced by `profile_pictures`, `student_excuse_letters`, and other attachable records

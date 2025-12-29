@@ -6,6 +6,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Livewire;
 use App\Policies\ReferenceTablePolicy;
+use App\Policies\ProfilePolicy;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,9 +23,24 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Load profile configs from subfolder
+        config(['profile.personal' => require config_path('profile/personal.php')]);
+        config(['profile.account' => require config_path('profile/account.php')]);
+        config(['profile.credentials' => require config_path('profile/credentials.php')]);
+        config(['profile.fceer' => require config_path('profile/fceer.php')]);
+
         // Register custom Livewire aliases for dynamic reference CRUD
         if (class_exists(Livewire::class)) {
             Livewire::component('reference-crud', \App\Http\Livewire\ReferenceCrud::class);
+
+            // Explicitly register profile components
+            Livewire::component('profile.show', \App\Http\Livewire\Profile\Show::class);
+            Livewire::component('profile.personal-records', \App\Http\Livewire\Profile\PersonalRecords::class);
+            Livewire::component('profile.account-records', \App\Http\Livewire\Profile\AccountRecords::class);
+            Livewire::component('profile.credentials', \App\Http\Livewire\Profile\Credentials::class);
+            Livewire::component('profile.fceer-records', \App\Http\Livewire\Profile\FceerRecords::class);
+            Livewire::component('profile-crud', \App\Http\Livewire\Profile\ProfileCrud::class);
+            Livewire::component('profile-form-modal', \App\Http\Livewire\Profile\ProfileFormModal::class);
 
             // Explicitly register child reference components (aliases to ensure discovery)
 
@@ -35,8 +51,8 @@ class AppServiceProvider extends ServiceProvider
             Livewire::component('app.http.livewire.reference.reference-form-modal', \App\Http\Livewire\Reference\Modal\ReferenceFormModal::class);
             Livewire::component('reference-form-modal', \App\Http\Livewire\Reference\Modal\ReferenceFormModal::class);
 
-            Livewire::component('app.http.livewire.reference.reference-confirm-changes-modal', \App\Http\Livewire\Reference\ReferenceConfirmChangesModal::class);
-            Livewire::component('reference-confirm-changes-modal', \App\Http\Livewire\Reference\ReferenceConfirmChangesModal::class);
+            Livewire::component('app.http.livewire.reference.reference-confirm-changes-modal', \App\Http\Livewire\Reference\Modal\ReferenceConfirmChangesModal::class);
+            Livewire::component('reference-confirm-changes-modal', \App\Http\Livewire\Reference\Modal\ReferenceConfirmChangesModal::class);
 
             Livewire::component('app.http.livewire.reference.reference-details-modal', \App\Http\Livewire\Reference\Modal\ReferenceDetailsModal::class);
             Livewire::component('reference-details-modal', \App\Http\Livewire\Reference\Modal\ReferenceDetailsModal::class);
@@ -67,5 +83,8 @@ class AppServiceProvider extends ServiceProvider
                 return $this->dispatch($event, ...$params);
             });
         }
+
+        // Register policies
+        Gate::policy(\App\Models\User::class, ProfilePolicy::class);
     }
 }

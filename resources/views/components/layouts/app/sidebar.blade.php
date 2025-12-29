@@ -153,53 +153,64 @@
 </flux:sidebar>
 
 @php
-    $routeBreadcrumbs = [
-        'database*' => [
-            ['label' => 'Dashboard', 'href' => route('dashboard')],
-            ['label' => 'Database', 'href' => route('database')],
-        ],
-        'database.provinces*' => [
-            ['label' => 'Dashboard', 'href' => route('dashboard')],
-            ['label' => 'Database (Address)', 'href' => route('database')],
-            ['label' => 'Provinces', 'href' => route('database.provinces')],
-        ],
-        'database.cities*' => [
-            ['label' => 'Dashboard', 'href' => route('dashboard')],
-            ['label' => 'Database (Address)', 'href' => route('database')],
-            ['label' => 'Cities', 'href' => route('database.cities')],
-        ],
-        'database.barangays*' => [
-            ['label' => 'Dashboard', 'href' => route('dashboard')],
-            ['label' => 'Database (Address)', 'href' => route('database')],
-            ['label' => 'Barangays', 'href' => route('database.barangays')],
-        ],        'database.degree_fields*' => [
-            ['label' => 'Dashboard', 'href' => route('dashboard')],
-            ['label' => 'Database', 'href' => route('database')],
-            ['label' => 'Degree Fields', 'href' => route('database.degree_fields')],
-        ],
-        'database.degree_levels*' => [
-            ['label' => 'Dashboard', 'href' => route('dashboard')],
-            ['label' => 'Database', 'href' => route('database')],
-            ['label' => 'Degree Levels', 'href' => route('database.degree_levels')],
-        ],
-        'database.degree_programs*' => [
-            ['label' => 'Dashboard', 'href' => route('dashboard')],
-            ['label' => 'Database', 'href' => route('database')],
-            ['label' => 'Degree Programs', 'href' => route('database.degree_programs')],
-        ],
-        'database.degree_types*' => [
-            ['label' => 'Dashboard', 'href' => route('dashboard')],
-            ['label' => 'Database', 'href' => route('database')],
-            ['label' => 'Degree Types', 'href' => route('database.degree_types')],
-        ],    ];
-
+    // Dynamically build breadcrumbs for reference table pages to avoid repeating
+    // a large mapping. For pages under `pages.reference_tables.*`, derive the
+    // table key and map it to a section label where appropriate.
     $topbarLinks = [];
-    foreach ($routeBreadcrumbs as $pattern => $links) {
-        if (request()->routeIs($pattern)) {
-            $topbarLinks = $links;
-            $topbarLinks[count($topbarLinks) - 1]['current'] = true;
-            break;
-        }
+
+    if (request()->routeIs('pages.reference_tables.*')) {
+        $routeName = request()->route() ? request()->route()->getName() : null;
+        $parts = $routeName ? explode('.', $routeName) : [];
+        $key = $parts[2] ?? null;
+
+        // Map specific reference keys to their section labels shown in the Database page
+        $sectionMap = [
+            // Address
+            'provinces' => 'Address',
+            'cities' => 'Address',
+            'barangays' => 'Address',
+
+            // Educational
+            'degree_fields' => 'Educational Records',
+            'degree_levels' => 'Educational Records',
+            'degree_programs' => 'Educational Records',
+            'degree_types' => 'Educational Records',
+            'universities' => 'Educational Records',
+
+            // Professional
+            'prefix_titles' => 'Professional Credentials',
+            'suffix_titles' => 'Professional Credentials',
+            'fields_of_work' => 'Professional Credentials',
+
+            // Highschool
+            'highschools' => 'Highschool Records',
+            'highschool_subjects' => 'Highschool Records',
+
+            // FCEER
+            'volunteer_subjects' => 'FCEER Records',
+            'committees' => 'FCEER Records',
+            'positions' => 'FCEER Records',
+            'classrooms' => 'FCEER Records',
+            'review_seasons' => 'FCEER Records',
+            'fceer_batches' => 'FCEER Records',
+            'user_attendance_statuses' => 'FCEER Records',
+            'user_roles' => 'FCEER Records',
+        ];
+
+        $section = $sectionMap[$key] ?? 'Database';
+
+        $label = $key ? \Illuminate\Support\Str::title(str_replace('_', ' ', $key)) : 'Reference';
+
+        $topbarLinks = [
+            ['label' => 'Dashboard', 'href' => route('dashboard'), 'current' => false],
+            ['label' => $section === 'Database' ? 'Database' : "Database ({$section})", 'href' => route('database'), 'current' => false],
+            ['label' => $label, 'href' => $routeName ? route($routeName) : route('database'), 'current' => true],
+        ];
+    } elseif (request()->routeIs('database*')) {
+        $topbarLinks = [
+            ['label' => 'Dashboard', 'href' => route('dashboard'), 'current' => false],
+            ['label' => 'Database', 'href' => route('database'), 'current' => true],
+        ];
     }
 @endphp
 
@@ -209,7 +220,7 @@
             @foreach ($topbarLinks as $link)
                 <flux:navbar.item
                     href="{{ $link['href'] }}"
-                    :current="$link['current'] ?? false"
+                    :current="$link['current']"
                     wire:navigate
                 >
                     {{ $link['label'] }}

@@ -102,7 +102,7 @@ return new class extends Migration
             $table->softDeletes();
         });
 
-        Schema::create('committee_members', function (Blueprint $table) {
+        Schema::create('committee_memberships', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('restrict')->onUpdate('cascade');
             $table->foreignId('committee_id')->constrained('committees')->onDelete('restrict')->onUpdate('cascade');
@@ -227,7 +227,7 @@ return new class extends Migration
             $table->softDeletes();
         });
 
-        Schema::create('rooms', function (Blueprint $table) {
+        Schema::create('classrooms', function (Blueprint $table) {
             $table->id();
             $table->string('name', 255);
             $table->foreignId('adviser_id')->nullable()->constrained('users')->nullOnDelete()->onUpdate('cascade');
@@ -246,7 +246,7 @@ return new class extends Migration
             $table->string('volunteer_number', 50)->nullable()->unique();
             $table->string('student_number', 50)->nullable()->unique();
             $table->foreignId('batch_id')->nullable()->constrained('fceer_batches')->nullOnDelete()->onUpdate('cascade');
-            $table->foreignId('student_group_id')->nullable()->constrained('rooms')->nullOnDelete()->onUpdate('cascade');
+            $table->foreignId('student_group_id')->nullable()->constrained('classrooms')->nullOnDelete()->onUpdate('cascade');
             $table->timestamps();
         });
 
@@ -379,7 +379,7 @@ return new class extends Migration
             $table->date('birthday')->nullable();
             $table->string('sex', 10)->nullable();
             $table->foreignId('address_id')->nullable()->constrained('addresses')->nullOnDelete()->onUpdate('cascade');
-            $table->foreignId('student_group_id')->nullable()->constrained('rooms')->nullOnDelete()->onUpdate('cascade');
+            $table->foreignId('student_group_id')->nullable()->constrained('classrooms')->nullOnDelete()->onUpdate('cascade');
             $table->foreignId('batch_id')->nullable()->constrained('fceer_batches')->nullOnDelete()->onUpdate('cascade');
             $table->foreignId('status_id')->nullable()->constrained('user_attendance_statuses')->nullOnDelete()->onUpdate('cascade');
             $table->timestamps();
@@ -458,7 +458,7 @@ return new class extends Migration
         Schema::dropIfExists('educational_records');
         Schema::dropIfExists('addresses');
         Schema::dropIfExists('fceer_profiles');
-        Schema::dropIfExists('rooms');
+        Schema::dropIfExists('classrooms');
         Schema::dropIfExists('fceer_batches');
         Schema::dropIfExists('volunteer_subjects');
         Schema::dropIfExists('review_seasons');

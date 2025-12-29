@@ -13,8 +13,8 @@ class CommitteePosition extends Model
     protected $table = 'committee_positions';
 
     protected $fillable = [
-        'position_id',
-        'committee_id',
+        'name',
+        'description',
         'created_by_id',
         'updated_by_id',
     ];
@@ -29,13 +29,8 @@ class CommitteePosition extends Model
         return $this->belongsTo(User::class, 'updated_by_id');
     }
 
-    public function position()
+    public function CommitteeMemberships()
     {
-        return $this->belongsTo(Position::class, 'position_id');
-    }
-
-    public function committee()
-    {
-        return $this->belongsTo(Committee::class, 'committee_id');
+        return $this->hasMany(CommitteeMembership::class, 'committee_position_id');
     }
 }
