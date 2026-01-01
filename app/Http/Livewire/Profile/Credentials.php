@@ -27,6 +27,7 @@ class Credentials extends Component
 
     public function forwardOpenProfileModal($params)
     {
-        $this->emitTo('profile.credentials-form-modal', 'openCredentialsModal', $params);
+        // Use global emit; the CredentialsFormModal listens for 'openCredentialsModal' and filters by instanceKey
+        $this->emit('openCredentialsModal', $params);
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\Profile;
 
 use App\Models\User;
+use App\Models\ProfilePicture;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -14,6 +15,8 @@ class Show extends Component
         'active' => ['except' => 'personal'],
     ];
     protected array $availableSections = ['personal', 'account', 'credentials', 'fceer'];
+    
+    protected $listeners = ['refreshSidebarAvatar' => 'refreshUser'];
 
     public function mount($user = null)
     {
@@ -30,6 +33,11 @@ class Show extends Component
         }
     }
 
+    public function refreshUser()
+    {
+        $this->user = User::findOrFail($this->user->id);
+    }
+
     public function setActive(string $section)
     {
         if (! in_array($section, $this->availableSections)) {
@@ -41,6 +49,15 @@ class Show extends Component
 
     public function render()
     {
-        return view('livewire.profile.show');
+        $currentPicture = ProfilePicture::where('user_id', $this->user->id)
+            ->where('is_current', true)
+            ->with('attachment')
+            ->first();
+
+        return view('livewire.profile.show', [
+            'user' => $this->user,
+            'active' => $this->active,
+            'currentPicture' => $currentPicture,
+        ]);
     }
 }

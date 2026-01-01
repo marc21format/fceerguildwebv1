@@ -14,11 +14,28 @@ class Address extends Model
 
     protected $fillable = [
         'house_number',
+        'block_number',
         'street',
         'barangay_id',
         'city_id',
         'province_id',
     ];
+
+    protected $appends = ['full_address'];
+
+    public function getFullAddressAttribute()
+    {
+        $parts = array_filter([
+            $this->house_number,
+            $this->block_number,
+            $this->street,
+            optional($this->barangay)->name,
+            optional($this->city)->name,
+            optional($this->province)->name,
+        ]);
+
+        return implode(', ', $parts) ?: null;
+    }
 
     public function barangay()
     {
@@ -35,3 +52,4 @@ class Address extends Model
         return $this->belongsTo(Province::class);
     }
 }
+

@@ -15,7 +15,7 @@ return [
             'model' => App\Models\SubjectTeacher::class,
             'fields' => [
                 'volunteer_subject_id' => ['type' => 'select', 'label' => 'Volunteer Subject', 'options' => 'volunteer_subjects', 'required' => true],
-                'is_primary' => ['type' => 'checkbox', 'label' => 'Is Primary'],
+                'subject_proficiency' => ['type' => 'select', 'label' => 'Proficiency', 'options' => ['Beginner' => 'Beginner', 'Competent' => 'Competent', 'Proficient' => 'Proficient'], 'required' => true],
             ],
         ],
         'classroom_responsibilities' => [
@@ -27,13 +27,16 @@ return [
                 'note' => ['type' => 'textarea', 'label' => 'Note'],
             ],
         ],
-        'fceer_profiles' => [
+        'fceer_profile_section' => [
             'label' => 'FCEER Profile',
             'model' => App\Models\FceerProfile::class,
             'fields' => [
-                'fceer_id' => ['type' => 'select', 'label' => 'FCEER', 'options' => 'fceer_batches', 'required' => true],
-                'status' => ['type' => 'text', 'label' => 'Status', 'required' => true],
-                'notes' => ['type' => 'textarea', 'label' => 'Notes'],
+                'fceer_id' => ['type' => 'text', 'label' => 'FCEER ID'],
+                'volunteer_number' => ['type' => 'text', 'label' => 'Volunteer Number'],
+                'student_number' => ['type' => 'text', 'label' => 'Student Number'],
+                'batch_id' => ['type' => 'select', 'label' => 'Batch', 'options' => 'fceer_batches'],
+                'student_group_id' => ['type' => 'select', 'label' => 'Student Group', 'options' => 'classrooms'],
+                'status' => ['type' => 'select', 'label' => 'Status', 'options' => ['active' => 'Active', 'inactive' => 'Inactive']],
             ],
         ],
     ],

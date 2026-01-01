@@ -14,7 +14,7 @@ This Laravel + Livewire starter (Livewire Flux + Volt) app uses Fortify for auth
 - Build assets: `npm run build` (Vite). See `package.json` scripts.
 - Project setup: `composer run setup` performs composer install, environment bootstrap, migrations, `npm install`, and `npm run build`.
 - Tests: `composer test` runs `@php artisan test`. Tests use Pest; configuration in `phpunit.xml` uses an in-memory sqlite DB and many env overrides (see `phpunit.xml`).
-
+      
 3. Project-specific patterns and conventions
 - Volt + Livewire: Add Volt pages with `Volt::route('path', 'view.name')`. Volt mounts two view paths in `VoltServiceProvider::boot()` — `resources/views/livewire` and `resources/views/pages`.
 - Fortify integration: Custom Fortify views are set in `FortifyServiceProvider::configureViews()` to Livewire views (e.g. `livewire.auth.login`). Rate limiting is defined in `configureRateLimiting()`.

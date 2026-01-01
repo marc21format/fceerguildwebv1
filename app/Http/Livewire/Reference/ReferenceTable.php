@@ -77,7 +77,7 @@ class ReferenceTable extends Component
     protected $updatesQueryString = ['search', 'sort', 'direction'];
 
     protected $listeners = [
-        'savedReference' => '$refresh',
+        'savedReference' => 'handleSavedReference',
         'refreshReferenceTable' => 'handleRefresh',
         'refreshReferenceArchive' => 'handleRefresh',
         'referenceOptionsUpdated' => 'handleReferenceOptionsUpdated',
@@ -102,6 +102,24 @@ class ReferenceTable extends Component
         $this->emit('setSelected', $this->selected ?? []);
         // ensure options are fresh after external changes
         $this->refreshResolvedFields();
+    }
+
+    /**
+     * Handle a savedReference event payload and only refresh when it applies
+     * to this particular reference table (by configKey or modelClass).
+     */
+    public function handleSavedReference($payload = null): void
+    {
+        if (is_array($payload)) {
+            if (isset($payload['configKey']) && $payload['configKey'] !== $this->configKey) {
+                return;
+            }
+            if (isset($payload['modelClass']) && $payload['modelClass'] !== $this->modelClass) {
+                return;
+            }
+        }
+
+        $this->handleRefresh();
     }
     
     public function hydrate(): void

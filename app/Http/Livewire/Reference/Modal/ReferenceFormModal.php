@@ -118,6 +118,7 @@ class ReferenceFormModal extends Component
             'state' => $this->state,
             'changes' => $this->changes,
             'modelClass' => $this->modelClass,
+            'configKey' => $this->configKey ?? null,
         ]);
 
         $this->open = false;

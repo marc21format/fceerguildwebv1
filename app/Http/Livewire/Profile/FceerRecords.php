@@ -12,7 +12,6 @@ class FceerRecords extends Component
     protected $listeners = [
         'requestOpenProfileModal' => 'forwardOpenProfileModal',
     ];
-
     public function mount(User $user)
     {
         $this->user = $user;
@@ -24,9 +23,8 @@ class FceerRecords extends Component
         $sections = config('profile.fceer.sections');
         return view('livewire.profile.fceer-records', compact('sections'));
     }
-
     public function forwardOpenProfileModal($params)
     {
-        $this->emitTo('profile.fceer-form-modal', 'openFceerModal', $params);
+        $this->emit('openCredentialsModal', $params);
     }
 }

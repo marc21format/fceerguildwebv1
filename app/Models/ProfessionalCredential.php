@@ -22,7 +22,7 @@ class ProfessionalCredential extends Model
     ];
 
     protected $casts = [
-        'issued_on' => 'date',
+        'issued_on' => 'integer',
     ];
 
     public function user(): BelongsTo
@@ -45,13 +45,18 @@ class ProfessionalCredential extends Model
         return $this->belongsTo(SuffixTitle::class, 'suffix_id');
     }
 
-    public function creator(): BelongsTo
+    public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by_id');
     }
 
-    public function updater(): BelongsTo
+    public function updatedBy()
     {
         return $this->belongsTo(User::class, 'updated_by_id');
+    }
+
+    public function deletedBy()
+    {
+        return $this->belongsTo(User::class, 'deleted_by_id');
     }
 }

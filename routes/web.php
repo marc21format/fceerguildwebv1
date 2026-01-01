@@ -47,6 +47,27 @@ Route::middleware(['auth'])->group(function () {
         ->name('profile.show.other');
 
     Route::view('profile', 'profile')->name('profile.show');
+
+    // Profiles listing page
+    Route::get('profiles', function () {
+        $users = ProfileUser::orderBy('name')->get();
+        return view('pages.profiles.index', compact('users'));
+    })
+        ->middleware(['auth'])
+        ->name('profiles.index');
+
+    // Profiles show (mirror of profile routes but under /profiles)
+    Route::get('profiles/{user}/{section?}', function (ProfileUser $user, $section = null) {
+        return view('pages.profiles.show', compact('user', 'section'));
+    })
+        ->middleware('can:manage,user')
+        ->name('profiles.show.section');
+
+    Route::get('profiles/{user}', function (ProfileUser $user) {
+        return view('pages.profiles.show', compact('user'));
+    })
+        ->middleware('can:manage,user')
+        ->name('profiles.show.other');
         
     Route::view('database/provinces', 'pages.reference_tables.provinces')
         ->middleware(['auth'])
@@ -126,4 +147,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('references/export', [\App\Http\Controllers\ReferenceExportController::class, 'export'])
         ->middleware(['auth'])
         ->name('references.export');
+
+    // Roster pages
+    Route::middleware(['auth', 'can:viewRoster'])->group(function () {
+        Route::view('roster/volunteers', 'pages.roster.volunteers')
+            ->name('roster.volunteers');
+        Route::view('roster/students', 'pages.roster.students')
+            ->name('roster.students');
+    });
 });

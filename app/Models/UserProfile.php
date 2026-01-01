@@ -20,6 +20,7 @@ class UserProfile extends Model
         'lived_name',
         'generational_suffix',
         'phone_number',
+        'facebook_link',
         'birthday',
         'sex',
         'address_id',

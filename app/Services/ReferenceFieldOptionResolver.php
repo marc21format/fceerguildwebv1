@@ -22,6 +22,44 @@ class ReferenceFieldOptionResolver
     }
 
     /**
+     * Resolve options from a reference-tables config key (slug).
+     * Returns an associative array of value => label or an empty array.
+     *
+     * @param string $slug
+     * @param string $defaultLabel
+     * @param string $defaultValue
+     * @return array
+     */
+    public function resolveFromReferenceTable(string $slug, string $defaultLabel = 'name', string $defaultValue = 'id'): array
+    {
+        $config = config('reference-tables.' . $slug);
+
+        // If config exists, try to find a field that contains an options descriptor
+        if (is_array($config) && ! empty($config)) {
+            foreach ($config as $field) {
+                if (isset($field['options']) && is_array($field['options']) && $this->isOptionsDescriptor($field['options'])) {
+                    // Use the descriptor to resolve options via existing logic
+                    $tmp = ['key' => $field['key'] ?? $slug, 'type' => 'select', 'options' => $field['options']];
+                    $resolved = $this->resolveFieldOptions($tmp);
+                    return $resolved['options'] ?? [];
+                }
+            }
+        }
+
+        // Fallback: try to derive a model name from the slug and pluck
+        $modelClass = '\\App\\Models\\' . Str::studly(Str::singular($slug));
+        if (class_exists($modelClass)) {
+            try {
+                return $modelClass::pluck($defaultLabel, $defaultValue)->toArray();
+            } catch (\Throwable $e) {
+                \Log::error('ReferenceFieldOptionResolver: pluck from derived model failed', ['model' => $modelClass, 'error' => $e->getMessage()]);
+                return [];
+            }
+        }
+
+        return [];
+    }
+    /**
      * Resolve options for a single field definition.
      * Safe: catches exceptions and returns empty options on failure.
      *

@@ -13,6 +13,10 @@ class FceerProfile extends Model
     protected $fillable = [
         'user_id',
         'fceer_id',
+        'volunteer_number',
+        'student_number',
+        'batch_id',
+        'student_group_id',
         'status',
         'notes',
         'created_by_id',
@@ -24,12 +28,27 @@ class FceerProfile extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function creator(): BelongsTo
+    public function batch(): BelongsTo
+    {
+        return $this->belongsTo(FceerBatch::class, 'batch_id');
+    }
+
+    public function studentGroup(): BelongsTo
+    {
+        return $this->belongsTo(Classroom::class, 'student_group_id');
+    }
+
+    public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by_id');
     }
 
-    public function updater(): BelongsTo
+    public function deletedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'deleted_by_id');
+    }
+
+    public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by_id');
     }

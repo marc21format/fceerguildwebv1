@@ -1,11 +1,11 @@
 <div role="status" id="toaster" x-data="toasterHub(@js($toasts), @js($config))" @class([
-    'fixed z-50 p-4 w-full flex flex-col pointer-events-none sm:p-6',
+    'fixed z-50 p-4 w-full flex flex-col pointer-events-none sm:p-6 sm:max-w-md',
     'bottom-0' => $alignment->is('bottom'),
     'top-1/2 -translate-y-1/2' => $alignment->is('middle'),
     'top-0' => $alignment->is('top'),
-    'items-start rtl:items-end' => $position->is('left'),
-    'items-center' => $position->is('center'),
-    'items-end rtl:items-start' => $position->is('right'),
+    'left-0 items-start rtl:items-end' => $position->is('left'),
+    'left-1/2 -translate-x-1/2 items-center' => $position->is('center'),
+    'right-0 items-end rtl:items-start' => $position->is('right'),
  ])>
     <template x-for="toast in toasts" :key="toast.id">
         <div x-show="toast.isVisible"

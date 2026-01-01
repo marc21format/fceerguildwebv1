@@ -196,6 +196,14 @@ return [
             'label' => 'Name',
             'type' => 'text',
             'rules' => 'required|string|max:255',
+            // Provide an options descriptor so ReferenceFieldOptionResolver
+            // can return field of work records when asked for "fields_of_work".
+            'options' => [
+                'model' => App\Models\FieldOfWork::class,
+                'label' => 'name',
+                'value' => 'id',
+                'order_by' => ['name' => 'asc'],
+            ],
         ],
         [
             'key' => 'description',
@@ -207,10 +215,16 @@ return [
 
     'prefix_titles' => [
         [
-            'key' => 'title',
-            'label' => 'Title',
+            'key' => 'name',
+            'label' => 'Name',
             'type' => 'text',
             'rules' => 'required|string|max:255',
+            'options' => [
+                'model' => App\Models\PrefixTitle::class,
+                'label' => 'name',
+                'value' => 'id',
+                'order_by' => ['name' => 'asc'],
+            ],
         ],
         [
             'key' => 'abbreviation',
@@ -234,10 +248,19 @@ return [
 
     'suffix_titles' => [
         [
-            'key' => 'title',
-            'label' => 'Title',
+            'key' => 'name',
+            'label' => 'Name',
             'type' => 'text',
             'rules' => 'required|string|max:255',
+            // SuffixTitle model uses the `title` column for the display label.
+            // Provide an options descriptor so resolveFromReferenceTable('suffix_titles')
+            // yields suffix records keyed by id and labeled by title.
+            'options' => [
+                'model' => App\Models\SuffixTitle::class,
+                'label' => 'title',
+                'value' => 'id',
+                'order_by' => ['title' => 'asc'],
+            ],
         ],
         [
             'key' => 'abbreviation',

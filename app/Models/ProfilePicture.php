@@ -13,7 +13,7 @@ class ProfilePicture extends Model
     protected $table = 'profile_pictures';
 
     protected $fillable = [
-        'user_profile_id',
+        'user_id',
         'attachment_id',
         'is_current',
         'uploaded_by_id',
@@ -26,9 +26,9 @@ class ProfilePicture extends Model
         'metadata' => 'array',
     ];
 
-    public function userProfile()
+    public function user()
     {
-        return $this->belongsTo(UserProfile::class, 'user_profile_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function attachment()

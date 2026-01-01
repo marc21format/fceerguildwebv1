@@ -295,6 +295,8 @@ return new class extends Migration
             $table->smallInteger('year_started')->nullable();
             $table->string('level', 50)->nullable();
             $table->smallInteger('year_ended')->nullable();
+            $table->foreignId('created_by_id')->nullable()->constrained('users')->nullOnDelete()->onUpdate('cascade');
+            $table->foreignId('updated_by_id')->nullable()->constrained('users')->nullOnDelete()->onUpdate('cascade');
             $table->timestamps();
             $table->softDeletes();
         });
@@ -304,6 +306,8 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade')->onUpdate('cascade');
             $table->foreignId('highschool_subject_id')->constrained('highschool_subjects')->onDelete('cascade')->onUpdate('cascade');
             $table->enum('grade', ['fair','good','great','exceptional']);
+            $table->foreignId('created_by_id')->nullable()->constrained('users')->nullOnDelete()->onUpdate('cascade');
+            $table->foreignId('updated_by_id')->nullable()->constrained('users')->nullOnDelete()->onUpdate('cascade');
             $table->timestamps();
         });
 

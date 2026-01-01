@@ -14,10 +14,10 @@ class ClassroomResponsibility extends Model
         'user_id',
         'classroom_position_id',
         'classroom_id',
-        'start_date',
-        'end_date',
+        'note',
         'created_by_id',
         'updated_by_id',
+        'deleted_by_id'
     ];
 
     public function user(): BelongsTo
@@ -35,12 +35,17 @@ class ClassroomResponsibility extends Model
         return $this->belongsTo(Classroom::class);
     }
 
-    public function creator(): BelongsTo
+    public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by_id');
     }
 
-    public function updater(): BelongsTo
+    public function deletedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'deleted_by_id');
+    }
+
+    public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by_id');
     }

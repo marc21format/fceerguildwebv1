@@ -44,4 +44,19 @@ class EducationalRecord extends Model
     {
         return $this->belongsTo(University::class, 'university_id');
     }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by_id');
+    }
+
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by_id');
+    }
+
+    public function deletedBy()
+    {
+        return $this->belongsTo(User::class, 'deleted_by_id');
+    }
 }

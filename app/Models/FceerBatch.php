@@ -17,6 +17,7 @@ class FceerBatch extends Model
         'year',
         'created_by_id',
         'updated_by_id',
+        'deleted_by_id',
         'review_season_id',
     ];
 
@@ -34,7 +35,10 @@ class FceerBatch extends Model
     {
         return $this->belongsTo(User::class, 'updated_by_id');
     }
-
+    public function deletedBy()
+    {
+        return $this->belongsTo(User::class, 'deleted_by_id');
+    }
     public function reviewSeason()
     {
         return $this->belongsTo(ReviewSeason::class, 'review_season_id');

@@ -1,1 +1,1 @@
-@include('livewire.profile.fceer.fceer-records')
+@include('livewire.profile.fceer.layout')

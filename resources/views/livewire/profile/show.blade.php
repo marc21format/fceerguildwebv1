@@ -1,19 +1,27 @@
 @php
     $sections = [
-        'personal' => 'Personal Records',
-        'account' => 'Account Records',
-        'credentials' => 'Credentials',
+        'account' => 'Account',
         'fceer' => 'FCEER Records',
+        'personal' => 'Personal Records',
+        'credentials' => 'Credentials',
     ];
 @endphp
 
-<div class="flex gap-6">
+<div class="flex gap-8">
     <!-- Sidebar Navigation + Avatar -->
-    <div class="w-64 flex-shrink-0">
-        <div class="mb-6 flex flex-col items-center px-2 text-center">
-            <div class="w-20 h-20 aspect-square flex-none rounded-full bg-white p-0 overflow-hidden flex items-center justify-center text-gray-900 text-2xl font-semibold ring-2 ring-gray-200 shadow-sm">
-                {{ method_exists($user, 'initials') ? $user->initials() : strtoupper(substr($user->name ?? $user->email ?? 'U', 0, 1)) }}
-            </div>
+    <div class="w-64 sticky top-25 self-start">
+        <div class="mb-6 flex flex-col items-center px-6 text-center">
+            @if($currentPicture && $currentPicture->attachment)
+                <div class="w-20 h-20 aspect-square flex-none rounded-full bg-white p-0 overflow-hidden flex items-center justify-center ring-2 ring-gray-200 shadow-sm">
+                    <img src="{{ asset('storage/' . $currentPicture->attachment->path) }}" 
+                         alt="{{ $user->name }}" 
+                         class="w-full h-full object-cover">
+                </div>
+            @else
+                <div class="w-20 h-20 aspect-square flex-none rounded-full bg-white p-0 overflow-hidden flex items-center justify-center text-gray-900 text-2xl font-semibold ring-2 ring-gray-200 shadow-sm">
+                    {{ $user->initials() }}
+                </div>
+            @endif
             <div class="mt-3 profile-value font-medium">{{ $user->name ?? $user->email }}</div>
             @php
                 $roleText = '';

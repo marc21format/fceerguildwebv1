@@ -13,7 +13,7 @@ class PrefixTitle extends Model
     protected $table = 'prefix_titles';
 
     protected $fillable = [
-        'title',
+        'name',
         'abbreviation',
         'field_of_work_id',
         'created_by_id',

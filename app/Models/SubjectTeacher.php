@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SubjectTeacher extends Model
 {
@@ -15,13 +16,14 @@ class SubjectTeacher extends Model
     protected $fillable = [
         'volunteer_subject_id',
         'user_id',
-        'is_primary',
+        'subject_proficiency',
         'created_by_id',
         'updated_by_id',
+        'deleted_by_id'
     ];
 
     protected $casts = [
-        'is_primary' => 'boolean',
+        'subject_proficiency' => 'string',
     ];
 
     public function volunteerSubject()
@@ -34,12 +36,17 @@ class SubjectTeacher extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function createdBy()
+    public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by_id');
     }
 
-    public function updatedBy()
+    public function deletedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'deleted_by_id');
+    }
+
+    public function updatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by_id');
     }

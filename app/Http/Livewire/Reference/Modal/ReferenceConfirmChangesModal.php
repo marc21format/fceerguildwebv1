@@ -65,8 +65,9 @@ class ReferenceConfirmChangesModal extends Component
                 }
             });
 
-            // Dispatch saved event for other components
-            $this->dispatch('savedReference');
+            // Emit a scoped savedReference payload so other tables only refresh when relevant
+            $payload = ['modelClass' => $this->modelClass ?? null, 'configKey' => $this->configKey ?? null];
+            $this->emit('savedReference', $payload);
 
             // Build a friendly label for the toast
             $label = $m->name ?? $m->title ?? $m->label ?? (method_exists($m, 'getKey') ? "ID {$m->getKey()}" : class_basename($m));

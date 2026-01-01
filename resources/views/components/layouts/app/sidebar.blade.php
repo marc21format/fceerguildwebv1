@@ -58,6 +58,25 @@
             >
                 {{ __('Database') }}
             </flux:sidebar.item>
+            
+            @can('viewRoster')
+            <flux:sidebar.item
+                icon="users"
+                :href="route('roster.volunteers')"
+                :current="request()->routeIs('roster.volunteers')"
+                wire:navigate
+            >
+                {{ __('Volunteers') }}
+            </flux:sidebar.item>
+            <flux:sidebar.item
+                icon="academic-cap"
+                :href="route('roster.students')"
+                :current="request()->routeIs('roster.students')"
+                wire:navigate
+            >
+                {{ __('Students') }}
+            </flux:sidebar.item>
+            @endcan
         </flux:sidebar.group>
 
         {{-- Icon-only when collapsed --}}
@@ -70,6 +89,27 @@
         >
             <span class="sr-only">{{ __('Database') }}</span>
         </flux:sidebar.item>
+        
+        @can('viewRoster')
+        <flux:sidebar.item
+            icon="users"
+            :href="route('roster.volunteers')"
+            wire:navigate
+            class="hidden in-data-flux-sidebar-on-desktop:in-data-flux-sidebar-collapsed-desktop:flex"
+            aria-hidden="true"
+        >
+            <span class="sr-only">{{ __('Volunteers') }}</span>
+        </flux:sidebar.item>
+        <flux:sidebar.item
+            icon="academic-cap"
+            :href="route('roster.students')"
+            wire:navigate
+            class="hidden in-data-flux-sidebar-on-desktop:in-data-flux-sidebar-collapsed-desktop:flex"
+            aria-hidden="true"
+        >
+            <span class="sr-only">{{ __('Students') }}</span>
+        </flux:sidebar.item>
+        @endcan
 
     </flux:sidebar.nav>
 
@@ -152,11 +192,12 @@
             </flux:dropdown>
 </flux:sidebar>
 
-@php
-    // Dynamically build breadcrumbs for reference table pages to avoid repeating
-    // a large mapping. For pages under `pages.reference_tables.*`, derive the
-    // table key and map it to a section label where appropriate.
-    $topbarLinks = [];
+<flux:main class="!p-0">
+    @php
+        // Dynamically build breadcrumbs for reference table pages to avoid repeating
+        // a large mapping. For pages under `pages.reference_tables.*`, derive the
+        // table key and map it to a section label where appropriate.
+        $topbarLinks = [];
 
     if (request()->routeIs('pages.reference_tables.*')) {
         $routeName = request()->route() ? request()->route()->getName() : null;
@@ -211,27 +252,83 @@
             ['label' => 'Dashboard', 'href' => route('dashboard'), 'current' => false],
             ['label' => 'Database', 'href' => route('database'), 'current' => true],
         ];
+    } elseif (request()->routeIs('roster.*')) {
+        // Roster pages
+        if (request()->routeIs('roster.volunteers')) {
+            $topbarLinks = [
+                ['label' => 'Dashboard', 'href' => route('dashboard'), 'current' => false],
+                ['label' => 'Roster', 'href' => route('roster.volunteers'), 'current' => false],
+                ['label' => 'Volunteers', 'href' => route('roster.volunteers'), 'current' => true],
+            ];
+        } elseif (request()->routeIs('roster.students')) {
+            $topbarLinks = [
+                ['label' => 'Dashboard', 'href' => route('dashboard'), 'current' => false],
+                ['label' => 'Roster', 'href' => route('roster.volunteers'), 'current' => false],
+                ['label' => 'Students', 'href' => route('roster.students'), 'current' => true],
+            ];
+        }
+    } elseif (request()->routeIs('profile.*')) {
+        // Settings routes
+        if (request()->routeIs('profile.edit')) {
+            $topbarLinks = [
+                ['label' => 'Dashboard', 'href' => route('dashboard'), 'current' => false],
+                ['label' => 'Settings', 'href' => route('profile.edit'), 'current' => false],
+                ['label' => 'Profile', 'href' => route('profile.edit'), 'current' => true],
+            ];
+        } elseif (request()->routeIs('user-password.edit')) {
+            $topbarLinks = [
+                ['label' => 'Dashboard', 'href' => route('dashboard'), 'current' => false],
+                ['label' => 'Settings', 'href' => route('profile.edit'), 'current' => false],
+                ['label' => 'Password', 'href' => route('user-password.edit'), 'current' => true],
+            ];
+        } elseif (request()->routeIs('appearance.edit')) {
+            $topbarLinks = [
+                ['label' => 'Dashboard', 'href' => route('dashboard'), 'current' => false],
+                ['label' => 'Settings', 'href' => route('profile.edit'), 'current' => false],
+                ['label' => 'Appearance', 'href' => route('appearance.edit'), 'current' => true],
+            ];
+        } elseif (request()->routeIs('two-factor.show')) {
+            $topbarLinks = [
+                ['label' => 'Dashboard', 'href' => route('dashboard'), 'current' => false],
+                ['label' => 'Settings', 'href' => route('profile.edit'), 'current' => false],
+                ['label' => 'Two Factor Authentication', 'href' => route('two-factor.show'), 'current' => true],
+            ];
+        } elseif (request()->routeIs('profile.show*')) {
+            // Profile pages with sections
+            $section = request()->route('section');
+            $sectionLabels = [
+                'personal' => 'Personal Records',
+                'account' => 'Account',
+                'fceer' => 'FCEER Records',
+                'credentials' => 'Credentials',
+            ];
+            
+            if ($section && isset($sectionLabels[$section])) {
+                $topbarLinks = [
+                    ['label' => 'Dashboard', 'href' => route('dashboard'), 'current' => false],
+                    ['label' => 'Profile', 'href' => route('profile.show'), 'current' => false],
+                    ['label' => $sectionLabels[$section], 'href' => request()->url(), 'current' => true],
+                ];
+            } else {
+                $topbarLinks = [
+                    ['label' => 'Dashboard', 'href' => route('dashboard'), 'current' => false],
+                    ['label' => 'Profile', 'href' => route('profile.show'), 'current' => true],
+                ];
+            }
+        }
     }
 @endphp
 
-@if ($topbarLinks)
-    <flux:header class="bg-zinc-50 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700">
-        <flux:navbar scrollable>
-            @foreach ($topbarLinks as $link)
-                <flux:navbar.item
-                    href="{{ $link['href'] }}"
-                    :current="$link['current']"
-                    wire:navigate
-                >
-                    {{ $link['label'] }}
-                </flux:navbar.item>
-            @endforeach
-        </flux:navbar>
-    </flux:header>
-@endif
+    @if ($topbarLinks)
+        <x-layouts.app.top-header :breadcrumbs="$topbarLinks" />
+    @else
+        <x-layouts.app.top-header />
+    @endif
 
-
-{{ $slot }}
+    <div class="px-2 pb-2">
+        {{ $slot }}
+    </div>
+</flux:main>
 
 {{-- Toaster hub for livewire-toaster package --}}
 <x-toaster-hub />
