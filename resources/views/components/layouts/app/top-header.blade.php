@@ -54,7 +54,7 @@
                     },
                     links: [
                         // Profile Section
-                        { section: 'Profile', title: 'My Profile', href: '{{ route('profile.show') }}' },
+                        { section: 'Profile', title: 'My Profile', href: '{{ route('profile.show', ['user' => auth()->user()->id]) }}' },
                         { section: 'Profile', title: 'Personal Records', href: '{{ route('profile.show.section', ['user' => Auth::id(), 'section' => 'personal']) }}' },
                         { section: 'Profile', title: 'Account', href: '{{ route('profile.show.section', ['user' => Auth::id(), 'section' => 'account']) }}' },
                         { section: 'Profile', title: 'FCEER Records', href: '{{ route('profile.show.section', ['user' => Auth::id(), 'section' => 'fceer']) }}' },
@@ -66,25 +66,51 @@
                         { section: 'Settings', title: 'Appearance', href: '{{ route('appearance.edit') }}' },
                         { section: 'Settings', title: 'Two Factor Authentication', href: '{{ route('two-factor.show') }}' },
                         
-                        // Database Section
+                        // User Attendance
+                        { section: 'User', title: 'My Attendance', href: '{{ route('attendance.user') }}' },
+                        
+                        @can('viewRoster')
+                        // Students Section
+                        { section: 'Students', title: 'Student Roster', href: '{{ route('roster.students') }}' },
+                        @can('viewAnyAttendance')
+                        { section: 'Students', title: 'Student Attendance', href: '{{ route('attendance.students') }}' },
+                        @endcan
+                        
+                        // Volunteers Section
+                        { section: 'Volunteers', title: 'Volunteer Roster', href: '{{ route('roster.volunteers') }}' },
+                        @can('viewAnyAttendance')
+                        { section: 'Volunteers', title: 'Volunteer Attendance', href: '{{ route('attendance.volunteers') }}' },
+                        @endcan
+                        @endcan
+                        
+                        // Database Section - Hidden from Students and Instructors
+                        @if(auth()->user() && !in_array(auth()->user()->role_id, [4, 5]))
                         { section: 'Database', title: 'Reference Tables', href: '{{ route('database') }}' },
                         { section: 'Database', title: 'Provinces', href: '{{ route('pages.reference_tables.provinces') }}' },
                         { section: 'Database', title: 'Cities', href: '{{ route('pages.reference_tables.cities') }}' },
                         { section: 'Database', title: 'Barangays', href: '{{ route('pages.reference_tables.barangays') }}' },
+                        { section: 'Database', title: 'Degree Fields', href: '{{ route('pages.reference_tables.degree_fields') }}' },
                         { section: 'Database', title: 'Degree Levels', href: '{{ route('pages.reference_tables.degree_levels') }}' },
+                        { section: 'Database', title: 'Degree Types', href: '{{ route('pages.reference_tables.degree_types') }}' },
                         { section: 'Database', title: 'Degree Programs', href: '{{ route('pages.reference_tables.degree_programs') }}' },
                         { section: 'Database', title: 'Universities', href: '{{ route('pages.reference_tables.universities') }}' },
                         { section: 'Database', title: 'High Schools', href: '{{ route('pages.reference_tables.highschools') }}' },
-                        { section: 'Database', title: 'Committees', href: '{{ route('pages.reference_tables.committees') }}' },
-                        { section: 'Database', title: 'Classrooms', href: '{{ route('pages.reference_tables.classrooms') }}' },
-                        { section: 'Database', title: 'Degree Programs', href: '{{ route('pages.reference_tables.degree_programs') }}' },
+                        { section: 'Database', title: 'High School Subjects', href: '{{ route('pages.reference_tables.highschool_subjects') }}' },
                         { section: 'Database', title: 'Prefix Titles', href: '{{ route('pages.reference_tables.prefix_titles') }}' },
                         { section: 'Database', title: 'Suffix Titles', href: '{{ route('pages.reference_tables.suffix_titles') }}' },
                         { section: 'Database', title: 'Fields of Work', href: '{{ route('pages.reference_tables.fields_of_work') }}' },
-
-                        // Roster Section
-                        { section: 'Roster', title: 'Volunteers', href: '{{ route('roster.volunteers') }}' },
-                        { section: 'Roster', title: 'Students', href: '{{ route('roster.students') }}' },
+                        { section: 'Database', title: 'Volunteer Subjects', href: '{{ route('pages.reference_tables.volunteer_subjects') }}' },
+                        { section: 'Database', title: 'Committees', href: '{{ route('pages.reference_tables.committees') }}' },
+                        { section: 'Database', title: 'Classroom Positions', href: '{{ route('pages.reference_tables.classroom_positions') }}' },
+                        { section: 'Database', title: 'Committee Positions', href: '{{ route('pages.reference_tables.committee_positions') }}' },
+                        { section: 'Database', title: 'Classrooms', href: '{{ route('pages.reference_tables.classrooms') }}' },
+                        { section: 'Database', title: 'FCEER Batches', href: '{{ route('pages.reference_tables.fceer_batches') }}' },
+                        { section: 'Database', title: 'User Attendance Statuses', href: '{{ route('pages.reference_tables.user_attendance_statuses') }}' },
+                        { section: 'Database', title: 'User Roles', href: '{{ route('pages.reference_tables.user_roles') }}' },
+                        @can('manageReviewSeason')
+                        { section: 'Database', title: 'Review Seasons', href: '{{ route('reviewseason') }}' },
+                        @endcan
+                        @endif
                     ],
                     get filteredLinks() {
                         if (!this.query) return this.links;

@@ -40,7 +40,11 @@ class FceerProfileFormModal extends Component
         // Check authorization
         $user = \App\Models\User::find($this->userId);
         if (!$user || !Gate::allows('manageFceerProfile', $user)) {
-            abort(403, 'Only administrators, executives, and system managers can edit FCEER profiles.');
+            $this->dispatch('toaster', 
+                message: 'You are not authorized to edit FCEER profiles. Only administrators, executives, and system managers can perform this action.',
+                type: 'error'
+            );
+            return;
         }
 
         $this->userRole = $user->role->name ?? null;
@@ -122,7 +126,11 @@ class FceerProfileFormModal extends Component
         // Authorization check again
         $user = \App\Models\User::find($this->userId);
         if (!$user || !Gate::allows('manageFceerProfile', $user)) {
-            abort(403, 'Only administrators, executives, and system managers can edit FCEER profiles.');
+            $this->dispatch('toaster', 
+                message: 'You are not authorized to edit FCEER profiles. Only administrators, executives, and system managers can perform this action.',
+                type: 'error'
+            );
+            return;
         }
 
         $original = [];

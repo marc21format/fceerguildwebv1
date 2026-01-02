@@ -46,7 +46,9 @@ Route::middleware(['auth'])->group(function () {
         ->middleware('can:manage,user')
         ->name('profile.show.other');
 
-    Route::view('profile', 'profile')->name('profile.show');
+    Route::get('profile', function () {
+        return view('profile');
+    })->name('profile.show');
 
     // Profiles listing page
     Route::get('profiles', function () {
@@ -155,4 +157,25 @@ Route::middleware(['auth'])->group(function () {
         Route::view('roster/students', 'pages.roster.students')
             ->name('roster.students');
     });
+
+    // Attendance pages
+    Route::prefix('attendance')->name('attendance.')->group(function () {
+        // Roster views (require viewAnyAttendance permission)
+        Route::middleware(['can:viewAnyAttendance'])->group(function () {
+            Route::view('students', 'pages.attendance.students')
+                ->name('students');
+            Route::view('volunteers', 'pages.attendance.volunteers')
+                ->name('volunteers');
+        });
+
+        // Individual user attendance (own or with permission)
+        Route::get('user/{userId?}', function ($userId = null) {
+            return view('pages.attendance.user', ['userId' => $userId]);
+        })->name('user');
+    });
+
+    // Review Season Management
+    Route::view('reviewseason', 'pages.reviewseason')
+        ->middleware(['can:manageReviewSeason'])
+        ->name('reviewseason');
 });

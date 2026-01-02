@@ -139,7 +139,11 @@ class ClassroomResponsibilitiesFormModal extends Component
             $profileUser = \App\Models\User::find($this->state['user_id']);
         }
         if ($profileUser && ! Gate::allows('manageClassroomResponsibilities', $profileUser)) {
-            abort(403, 'Only system managers and executives can manage classroom responsibilities.');
+            $this->dispatch('toaster', 
+                message: 'You are not authorized to manage classroom responsibilities. Only system managers and executives can perform this action.',
+                type: 'error'
+            );
+            return;
         }
 
         $original = [];

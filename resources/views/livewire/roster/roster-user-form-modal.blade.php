@@ -56,12 +56,13 @@
                     {{-- Role --}}
                     <div>
                         <label class="block text-sm font-medium text-gray-200 mb-1">Role</label>
-                        @include('livewire.components.styled-select', [
-                            'name' => 'roleId',
-                            'options' => $availableRoles,
-                            'selected' => $roleId,
-                            'placeholder' => 'Select role'
-                        ])
+                        <select wire:model="roleId"
+                            class="w-full rounded-md border border-gray-200 dark:border-zinc-600 bg-gray-50 dark:bg-zinc-700 text-gray-700 dark:text-gray-100 px-3 py-3 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            <option value="">Select role</option>
+                            @foreach($availableRoles as $id => $name)
+                                <option value="{{ $id }}">{{ $name }}</option>
+                            @endforeach
+                        </select>
                         @error('roleId')
                             <p class="mt-1 text-sm text-red-400">{{ $message }}</p>
                         @enderror

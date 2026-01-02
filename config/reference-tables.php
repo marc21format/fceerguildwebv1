@@ -196,14 +196,6 @@ return [
             'label' => 'Name',
             'type' => 'text',
             'rules' => 'required|string|max:255',
-            // Provide an options descriptor so ReferenceFieldOptionResolver
-            // can return field of work records when asked for "fields_of_work".
-            'options' => [
-                'model' => App\Models\FieldOfWork::class,
-                'label' => 'name',
-                'value' => 'id',
-                'order_by' => ['name' => 'asc'],
-            ],
         ],
         [
             'key' => 'description',

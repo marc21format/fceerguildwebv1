@@ -1,0 +1,1 @@
+<?php echo $__env->make('livewire.profile.fceer.layout', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\Marc Ian C. Young\laravel\fceerguildweb\resources\views\livewire/profile/fceer-records.blade.php ENDPATH**/ ?>

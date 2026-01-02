@@ -143,9 +143,9 @@ class ReferenceTable extends Component
         $this->rawFields = config('reference-tables.' . $this->configKey, []);
         $this->fields = app(\App\Services\ReferenceFieldSanitizer::class)->sanitize($this->rawFields);
 
-        // Initialize visibleFields to all configured field keys in order
-        $keys = collect($this->fields)->pluck('key')->filter()->values()->toArray();
-        $this->visibleFields = $keys;
+            // Initialize visibleFields to all configured field keys in order
+            $keys = collect($this->fields)->pluck('key')->filter()->values()->toArray();
+            $this->visibleFields = $this->prioritizeNameField($keys);
 
         // Pre-resolve options once on mount to avoid doing work on every render.
         $this->refreshResolvedFields();
@@ -179,7 +179,7 @@ class ReferenceTable extends Component
         } else {
             // add while preserving configured order
             $new = array_values(array_filter($allKeys, fn($k) => in_array($k, $this->visibleFields, true) || $k === $key));
-            $this->visibleFields = $new;
+            $this->visibleFields = $this->prioritizeNameField($new);
         }
 
         // Notify toolbar component(s) so their checkbox UI stays in sync
@@ -191,10 +191,23 @@ class ReferenceTable extends Component
      */
     public function resetVisibleFields(): void
     {
-        $this->visibleFields = collect($this->fields)->pluck('key')->filter()->values()->toArray();
+        $keys = collect($this->fields)->pluck('key')->filter()->values()->toArray();
+        $this->visibleFields = $this->prioritizeNameField($keys);
         $this->emit('setVisibleFields', $this->visibleFields);
         // ensure options are fresh after external changes
         $this->refreshResolvedFields();
+    }
+
+    protected function prioritizeNameField(array $keys): array
+    {
+        $keys = array_values(array_filter($keys, static fn($k) => $k !== null));
+        if (! in_array('name', $keys, true)) {
+            return $keys;
+        }
+
+        $filtered = array_values(array_filter($keys, static fn($k) => $k !== 'name'));
+        array_unshift($filtered, 'name');
+        return $filtered;
     }
 
     // Filter methods are handled via toolbar events. Handlers below react to those events.

@@ -7,7 +7,7 @@ use App\Models\Province;
 
 class ProvinceSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
         $provinces = [
             'Metro Manila',
@@ -15,6 +15,11 @@ class ProvinceSeeder extends Seeder
             'Laguna',
             'Batangas',
             'Bulacan',
+            'Rizal',
+            'Pampanga',
+            'Cebu',
+            'Davao del Sur',
+            'Iloilo',
         ];
 
         foreach ($provinces as $name) {

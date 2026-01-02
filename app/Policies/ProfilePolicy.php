@@ -3,61 +3,94 @@
 namespace App\Policies;
 
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 use Illuminate\Support\Facades\Log;
 
 class ProfilePolicy
 {
     /**
+     * Role ID constants.
+     * 1 = System Manager, 2 = Executive, 3 = Administrator, 4 = Instructor, 5 = Student
+     */
+    private const ROLE_SYSTEM_MANAGER = 1;
+    private const ROLE_EXECUTIVE = 2;
+    private const ROLE_ADMINISTRATOR = 3;
+    private const ROLE_INSTRUCTOR = 4;
+    private const ROLE_STUDENT = 5;
+
+    /**
+     * Admin role IDs that have full profile access.
+     * System Manager, Executive, Administrator
+     */
+    private const ADMIN_ROLE_IDS = [self::ROLE_SYSTEM_MANAGER, self::ROLE_EXECUTIVE, self::ROLE_ADMINISTRATOR];
+
+    /**
+     * Role IDs that can manage committee memberships and classroom responsibilities.
+     * System Manager, Executive only
+     */
+    private const MANAGEMENT_ROLE_IDS = [self::ROLE_SYSTEM_MANAGER, self::ROLE_EXECUTIVE];
+
+    /**
+     * Check if user has an admin role (System Manager, Executive, or Administrator).
+     */
+    private function isAdmin(User $user): bool
+    {
+        return in_array($user->role_id, self::ADMIN_ROLE_IDS);
+    }
+
+    /**
+     * Check if user has a management role (System Manager or Executive).
+     */
+    private function isManager(User $user): bool
+    {
+        return in_array($user->role_id, self::MANAGEMENT_ROLE_IDS);
+    }
+
+    /**
+     * Normalize $profileUser - it may be an id/string when used in route middleware.
+     */
+    private function normalizeProfileUser(User $user, $profileUser): User
+    {
+        if (!$profileUser) {
+            return $user;
+        }
+        
+        if (!$profileUser instanceof User) {
+            return User::find($profileUser) ?: $user;
+        }
+        
+        return $profileUser;
+    }
+
+    /**
      * Determine whether the user can view the profile.
      */
-    public function view(User $user, User $profileUser): bool
+    public function view(User $user, $profileUser): bool
     {
-        // Guests can't view any profiles
         if (!$user) return false;
+
+        $profileUser = $this->normalizeProfileUser($user, $profileUser);
 
         // Users can view their own profile
         if ($user->id === $profileUser->id) return true;
 
-        // Executive, admin, system manager can view others
-        return in_array($user->role, ['executive', 'administrator', 'system manager']);
+        // System Manager, Executive, Administrator can view any profile
+        return $this->isAdmin($user);
     }
 
     /**
      * Determine whether the user can update the profile.
      */
-    public function update(User $user, User $profileUser): bool
+    public function update(User $user, $profileUser): bool
     {
-        // Same as view by default
+        if (!$user) return false;
+
+        $profileUser = $this->normalizeProfileUser($user, $profileUser);
+
+        // Users can update their own profile
         if ($user->id === $profileUser->id) return true;
 
-        // If the profile being edited is a student or instructor, only allow specific admin roles
-        $profileRoleName = null;
-        if (isset($profileUser->role) && is_object($profileUser->role) && isset($profileUser->role->name)) {
-            $profileRoleName = strtolower(trim($profileUser->role->name));
-        } elseif (is_string($profileUser->role)) {
-            $profileRoleName = strtolower(trim($profileUser->role));
-        }
-
-        if (in_array($profileRoleName, ['student', 'instructor'])) {
-            $allowed = ['system manager', 'executive', 'administrator'];
-            $roles = [];
-            if (method_exists($user, 'getRoleNames')) {
-                $maybe = $user->getRoleNames();
-                if (is_iterable($maybe)) foreach ($maybe as $r) $roles[] = strtolower(trim((string)$r));
-            } elseif (isset($user->role)) {
-                if (is_object($user->role) && isset($user->role->name)) $roles[] = strtolower(trim($user->role->name));
-                else $roles[] = strtolower(trim((string)$user->role));
-            }
-            foreach ($roles as $r) {
-                foreach ($allowed as $a) {
-                    if (str_contains($r, $a)) return true;
-                }
-            }
-            return false;
-        }
-
-        return $this->view($user, $profileUser);
+        // System Manager, Executive, Administrator can update any profile
+        return $this->isAdmin($user);
     }
 
     /**
@@ -65,279 +98,74 @@ class ProfilePolicy
      */
     public function manage(User $user, $profileUser): bool
     {
-        Log::info('ProfilePolicy::manage called', ['auth_id' => optional($user)->id, 'profileUser_raw' => $profileUser]);
-        // Guests can't manage
-        if (! $user) return false;
+        Log::info('ProfilePolicy::manage called', [
+            'auth_id' => $user?->id,
+            'auth_role_id' => $user?->role_id,
+            'profileUser_raw' => $profileUser instanceof User ? $profileUser->id : $profileUser,
+        ]);
 
-        // Normalize $profileUser: it may be an id/string when used in route middleware
-        if (! $profileUser) {
-            $profileUser = $user;
-        } elseif (! $profileUser instanceof User) {
-            $profileUser = User::find($profileUser) ?: $user;
-        }
+        if (!$user) return false;
+
+        $profileUser = $this->normalizeProfileUser($user, $profileUser);
 
         // Allow managing own profile
         if ($user->id === $profileUser->id) return true;
 
-        // Determine role names (support both direct `role` property and getRoleNames())
-        $roles = [];
-        if (method_exists($user, 'getRoleNames')) {
-            $maybe = $user->getRoleNames();
-            if (is_iterable($maybe)) {
-                foreach ($maybe as $r) {
-                    $roles[] = is_string($r) ? $r : (is_object($r) && isset($r->name) ? $r->name : (is_array($r) && isset($r['name']) ? $r['name'] : (string) $r));
-                }
-            } else {
-                $roles[] = (string) $maybe;
-            }
-        } elseif (isset($user->role)) {
-            if (is_string($user->role)) {
-                $roles[] = $user->role;
-            } elseif (is_object($user->role) && isset($user->role->name)) {
-                $roles[] = $user->role->name;
-            } elseif (is_array($user->role) && isset($user->role['name'])) {
-                $roles[] = $user->role['name'];
-            } else {
-                $roles[] = (string) $user->role;
-            }
-        }
-
-        // Case-insensitive check and allow partial matches (e.g., 'System Manager', 'system_manager')
-        $allowed = ['executive', 'administrator', 'system manager'];
-        $rolesLower = array_map(fn($r) => strtolower(trim((string) $r)), $roles);
-
-        foreach ($rolesLower as $r) {
-            foreach ($allowed as $a) {
-                if (str_contains($r, $a)) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        // System Manager, Executive, Administrator can manage any profile
+        return $this->isAdmin($user);
     }
 
     /**
      * Determine whether the user can manage committee memberships.
-     * Only system managers and executives can add/edit/delete committee memberships.
-     * Admins, instructors, students, and guests cannot manage committee memberships.
+     * Only System Managers and Executives can add/edit/delete committee memberships.
      */
     public function manageCommitteeMemberships(User $user, $profileUser): bool
     {
-        // Guests can't manage
-        if (! $user) return false;
+        if (!$user) return false;
 
-        // Normalize $profileUser
-        if (! $profileUser) {
-            $profileUser = $user;
-        } elseif (! $profileUser instanceof User) {
-            $profileUser = User::find($profileUser) ?: $user;
-        }
-
-        // Determine role names
-        $roles = [];
-        if (method_exists($user, 'getRoleNames')) {
-            $maybe = $user->getRoleNames();
-            if (is_iterable($maybe)) {
-                foreach ($maybe as $r) {
-                    $roles[] = is_string($r) ? $r : (is_object($r) && isset($r->name) ? $r->name : (is_array($r) && isset($r['name']) ? $r['name'] : (string) $r));
-                }
-            } else {
-                $roles[] = (string) $maybe;
-            }
-        } elseif (isset($user->role)) {
-            if (is_string($user->role)) {
-                $roles[] = $user->role;
-            } elseif (is_object($user->role) && isset($user->role->name)) {
-                $roles[] = $user->role->name;
-            } elseif (is_array($user->role) && isset($user->role['name'])) {
-                $roles[] = $user->role['name'];
-            } else {
-                $roles[] = (string) $user->role;
-            }
-        }
-
-        // Only system manager and executive can manage committee memberships
-        $allowed = ['executive', 'system manager'];
-        $rolesLower = array_map(fn($r) => strtolower(trim((string) $r)), $roles);
-
-        foreach ($rolesLower as $r) {
-            foreach ($allowed as $a) {
-                if (str_contains($r, $a)) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        // System Manager, Executive can manage committee memberships
+        return $this->isManager($user);
     }
 
     /**
      * Determine whether the user can manage classroom responsibilities.
-     * Only system managers and executives can add/edit/delete classroom responsibilities.
-     * Admins, instructors, students, and guests cannot manage classroom responsibilities.
+     * Only System Managers and Executives can add/edit/delete classroom responsibilities.
      */
     public function manageClassroomResponsibilities(User $user, $profileUser): bool
     {
-        // Guests can't manage
-        if (! $user) return false;
+        if (!$user) return false;
 
-        // Normalize $profileUser
-        if (! $profileUser) {
-            $profileUser = $user;
-        } elseif (! $profileUser instanceof User) {
-            $profileUser = User::find($profileUser) ?: $user;
-        }
-
-        // Determine role names
-        $roles = [];
-        if (method_exists($user, 'getRoleNames')) {
-            $maybe = $user->getRoleNames();
-            if (is_iterable($maybe)) {
-                foreach ($maybe as $r) {
-                    $roles[] = is_string($r) ? $r : (is_object($r) && isset($r->name) ? $r->name : (is_array($r) && isset($r['name']) ? $r['name'] : (string) $r));
-                }
-            } else {
-                $roles[] = (string) $maybe;
-            }
-        } elseif (isset($user->role)) {
-            if (is_string($user->role)) {
-                $roles[] = $user->role;
-            } elseif (is_object($user->role) && isset($user->role->name)) {
-                $roles[] = $user->role->name;
-            } elseif (is_array($user->role) && isset($user->role['name'])) {
-                $roles[] = $user->role['name'];
-            } else {
-                $roles[] = (string) $user->role;
-            }
-        }
-
-        // Only system manager and executive can manage classroom responsibilities
-        $allowed = ['executive', 'system manager'];
-        $rolesLower = array_map(fn($r) => strtolower(trim((string) $r)), $roles);
-
-        foreach ($rolesLower as $r) {
-            foreach ($allowed as $a) {
-                if (str_contains($r, $a)) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        // System Manager, Executive can manage classroom responsibilities
+        return $this->isManager($user);
     }
 
     /**
      * Determine whether the user can manage FCEER profiles.
-     * Only administrators, executives, and system managers can edit FCEER profiles.
-     * Students and instructors cannot edit their own FCEER profiles.
+     * System Manager, Executive, Administrator can edit FCEER profiles.
      */
     public function manageFceerProfile(User $user, $profileUser): bool
     {
-        // Guests can't manage
-        if (! $user) return false;
+        if (!$user) return false;
 
-        // Normalize $profileUser
-        if (! $profileUser) {
-            $profileUser = $user;
-        } elseif (! $profileUser instanceof User) {
-            $profileUser = User::find($profileUser) ?: $user;
-        }
-
-        // Determine role names
-        $roles = [];
-        if (method_exists($user, 'getRoleNames')) {
-            $maybe = $user->getRoleNames();
-            if (is_iterable($maybe)) {
-                foreach ($maybe as $r) {
-                    $roles[] = is_string($r) ? $r : (is_object($r) && isset($r->name) ? $r->name : (is_array($r) && isset($r['name']) ? $r['name'] : (string) $r));
-                }
-            } else {
-                $roles[] = (string) $maybe;
-            }
-        } elseif (isset($user->role)) {
-            if (is_string($user->role)) {
-                $roles[] = $user->role;
-            } elseif (is_object($user->role) && isset($user->role->name)) {
-                $roles[] = $user->role->name;
-            } elseif (is_array($user->role) && isset($user->role['name'])) {
-                $roles[] = $user->role['name'];
-            } else {
-                $roles[] = (string) $user->role;
-            }
-        }
-
-        // Only administrator, executive, and system manager can manage FCEER profiles
-        $allowed = ['administrator', 'executive', 'system manager'];
-        $rolesLower = array_map(fn($r) => strtolower(trim((string) $r)), $roles);
-
-        foreach ($rolesLower as $r) {
-            foreach ($allowed as $a) {
-                if (str_contains($r, $a)) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        // System Manager, Executive, Administrator can manage FCEER profiles
+        return $this->isAdmin($user);
     }
 
     /**
      * Determine whether the user can manage personal records (identification, contact details).
-     * Only administrators and executives can edit others' personal records.
-     * Students and instructors can only view but not edit others' personal records.
-     * Everyone can edit their own personal records.
+     * Users can edit their own personal records.
+     * Admins can edit others' personal records.
      */
     public function managePersonal(User $user, $profileUser): bool
     {
-        // Guests can't manage
-        if (! $user) return false;
+        if (!$user) return false;
 
-        // Normalize $profileUser
-        if (! $profileUser) {
-            $profileUser = $user;
-        } elseif (! $profileUser instanceof User) {
-            $profileUser = User::find($profileUser) ?: $user;
-        }
+        $profileUser = $this->normalizeProfileUser($user, $profileUser);
 
         // Users can edit their own personal records
         if ($user->id === $profileUser->id) return true;
 
-        // Determine role names
-        $roles = [];
-        if (method_exists($user, 'getRoleNames')) {
-            $maybe = $user->getRoleNames();
-            if (is_iterable($maybe)) {
-                foreach ($maybe as $r) {
-                    $roles[] = is_string($r) ? $r : (is_object($r) && isset($r->name) ? $r->name : (is_array($r) && isset($r['name']) ? $r['name'] : (string) $r));
-                }
-            } else {
-                $roles[] = (string) $maybe;
-            }
-        } elseif (isset($user->role)) {
-            if (is_string($user->role)) {
-                $roles[] = $user->role;
-            } elseif (is_object($user->role) && isset($user->role->name)) {
-                $roles[] = $user->role->name;
-            } elseif (is_array($user->role) && isset($user->role['name'])) {
-                $roles[] = $user->role['name'];
-            } else {
-                $roles[] = (string) $user->role;
-            }
-        }
-
-        // Only administrator and executive can manage others' personal records
-        $allowed = ['administrator', 'executive'];
-        $rolesLower = array_map(fn($r) => strtolower(trim((string) $r)), $roles);
-
-        foreach ($rolesLower as $r) {
-            foreach ($allowed as $a) {
-                if (str_contains($r, $a)) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        // System Manager, Executive, Administrator can manage others' personal records
+        return $this->isAdmin($user);
     }
 }

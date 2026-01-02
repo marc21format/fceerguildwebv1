@@ -22,7 +22,7 @@ class AttendanceRecord extends Model
         'session',
         'absence_value',
         'review_season_id',
-        'status_id',
+        'student_status_id',
         'recorded_by_id',
         'updated_by_id',
     ];
@@ -43,9 +43,12 @@ class AttendanceRecord extends Model
         return $this->belongsTo(ReviewSeason::class, 'review_season_id');
     }
 
-    public function status()
+    /**
+     * Get the student attendance status for this record.
+     */
+    public function studentStatus()
     {
-        return $this->belongsTo(UserAttendanceStatus::class, 'status_id');
+        return $this->belongsTo(StudentAttendanceStatus::class, 'student_status_id');
     }
 
     public function recordedBy()

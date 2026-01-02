@@ -8,6 +8,7 @@ use Livewire\Livewire;
 use App\Policies\ReferenceTablePolicy;
 use App\Policies\ProfilePolicy;
 use App\Policies\RosterPolicy;
+use App\Policies\AttendancePolicy;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -43,6 +44,10 @@ class AppServiceProvider extends ServiceProvider
             Livewire::component('roster.roster-delete-modal', \App\Http\Livewire\Roster\RosterDeleteModal::class);
             Livewire::component('roster.roster-restore-modal', \App\Http\Livewire\Roster\RosterRestoreModal::class);
             Livewire::component('roster.roster-force-delete-modal', \App\Http\Livewire\Roster\RosterForceDeleteModal::class);
+
+            // Attendance components
+            Livewire::component('attendance.export-modal', \App\Livewire\Attendance\ExportModal::class);
+            Livewire::component('attendance.review-season-modal', \App\Livewire\Attendance\ReviewSeasonModal::class);
 
             // Explicitly register profile components
             Livewire::component('profile.show', \App\Http\Livewire\Profile\Show::class);
@@ -225,6 +230,23 @@ class AppServiceProvider extends ServiceProvider
             Gate::define('deleteRosterUser', [RosterPolicy::class, 'delete']);
             Gate::define('forceDeleteRosterUser', [RosterPolicy::class, 'forceDelete']);
             Gate::define('restoreRosterUser', [RosterPolicy::class, 'restore']);
+
+            // Attendance gates
+            Gate::define('viewAnyAttendance', [AttendancePolicy::class, 'viewAny']);
+            Gate::define('createAttendance', [AttendancePolicy::class, 'create']);
+            Gate::define('bulkUpdateAttendance', [AttendancePolicy::class, 'bulkUpdate']);
+            Gate::define('exportAttendance', [AttendancePolicy::class, 'export']);
+            Gate::define('manageReviewSeason', [AttendancePolicy::class, 'manageReviewSeason']);
+            
+            // View attendance gate - managers (1,2,3) can view any, users can view themselves
+            Gate::define('view-attendance', function ($actor, $targetUser) {
+                // Managers can view any user
+                if (in_array($actor->role_id, [1, 2, 3])) {
+                    return true;
+                }
+                // Users can view their own attendance
+                return $actor->id === $targetUser->id;
+            });
         }
 
         // Provide a server-side `emit()` helper that proxies to the project's `dispatch()`
@@ -239,5 +261,6 @@ class AppServiceProvider extends ServiceProvider
 
         // Register policies
         Gate::policy(\App\Models\User::class, ProfilePolicy::class);
+        Gate::policy(\App\Models\AttendanceRecord::class, AttendancePolicy::class);
     }
 }

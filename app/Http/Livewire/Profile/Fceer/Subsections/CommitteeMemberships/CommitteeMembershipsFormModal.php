@@ -138,7 +138,11 @@ class CommitteeMembershipsFormModal extends Component
             $profileUser = \App\Models\User::find($this->state['user_id']);
         }
         if ($profileUser && ! Gate::allows('manageCommitteeMemberships', $profileUser)) {
-            abort(403, 'Only system managers and executives can manage committee memberships.');
+            $this->dispatch('toaster', 
+                message: 'You are not authorized to manage committee memberships. Only system managers and executives can perform this action.',
+                type: 'error'
+            );
+            return;
         }
 
         $original = [];

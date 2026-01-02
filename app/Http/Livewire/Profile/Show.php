@@ -18,18 +18,29 @@ class Show extends Component
     
     protected $listeners = ['refreshSidebarAvatar' => 'refreshUser'];
 
-    public function mount($user = null)
+    public function mount($user = null, $section = null)
     {
-        $this->user = $user ? User::findOrFail($user) : Auth::user();
+        // If $user is a User model (from route binding), use it directly
+        // If $user is an ID, find the user
+        // If null, use the authenticated user
+        if ($user instanceof User) {
+            $this->user = $user;
+        } elseif ($user) {
+            $this->user = User::findOrFail($user);
+        } else {
+            // Default to authenticated user when no user is provided
+            $this->user = Auth::user() ?? abort(401);
+        }
+        
         $this->authorize('view', $this->user);
 
         // Prefer route segment (path) like /profile/{user}/{section}
-        $sectionFromRoute = request()->route('section');
+        $sectionFromRoute = $section ?? request()->route('section');
         $sectionFromQuery = request()->query('active');
 
-        $section = $sectionFromRoute ?? $sectionFromQuery ?? $this->active;
-        if (in_array($section, $this->availableSections)) {
-            $this->active = $section;
+        $resolvedSection = $sectionFromRoute ?? $sectionFromQuery ?? $this->active;
+        if (in_array($resolvedSection, $this->availableSections)) {
+            $this->active = $resolvedSection;
         }
     }
 

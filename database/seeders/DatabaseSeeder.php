@@ -15,13 +15,24 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::firstOrCreate(
-            ['email' => 'test@example.com'],
-            [
-                'name' => 'Test User',
-                'password' => 'password',
-                'email_verified_at' => now(),
-            ]
-        );
+        // Reference table seeders (order matters for foreign key dependencies)
+        $this->call([
+            UserSeeder::class,
+            ProvinceSeeder::class,
+            CitySeeder::class,
+            BarangaySeeder::class,
+            DegreeFieldSeeder::class,
+            DegreeLevelSeeder::class,
+            DegreeTypeSeeder::class,
+            DegreeProgramSeeder::class,
+            UniversitySeeder::class,
+            HighschoolSeeder::class,
+            HighschoolSubjectSeeder::class,
+            FieldOfWorkSeeder::class,
+            PrefixTitleSeeder::class,
+            SuffixTitleSeeder::class,
+            VolunteerSubjectSeeder::class,
+            ReviewSeasonSeeder::class,
+        ]);
     }
 }

@@ -18,8 +18,8 @@
 
     {{-- HEADER --}}
     @php
-        $logoLight = file_exists(public_path('images/logo-light.png')) ? asset('images/logo-light.png') : null;
-        $logoDark = file_exists(public_path('images/logo-dark.png')) ? asset('images/logo-dark.png') : null;
+        $logoLight = file_exists(public_path('light.svg')) ? asset('light.svg') : null;
+        $logoDark = file_exists(public_path('dark.svg')) ? asset('dark.svg') : null;
     @endphp
     <flux:sidebar.header>
         @if ($logoLight)
@@ -49,68 +49,179 @@
             Home
         </flux:sidebar.item>
 
-        <flux:sidebar.group :heading="__('Platform')">
-            <flux:sidebar.item
-                icon="layout-grid"
-                :href="route('database')"
-                :current="request()->routeIs('database*')"
-                wire:navigate
-            >
-                {{ __('Database') }}
-            </flux:sidebar.item>
-            
-            @can('viewRoster')
-            <flux:sidebar.item
-                icon="users"
-                :href="route('roster.volunteers')"
-                :current="request()->routeIs('roster.volunteers')"
-                wire:navigate
-            >
-                {{ __('Volunteers') }}
-            </flux:sidebar.item>
+        {{-- Students Section --}}
+        @can('viewRoster')
+        <flux:sidebar.group :heading="__('Students')">
             <flux:sidebar.item
                 icon="academic-cap"
                 :href="route('roster.students')"
                 :current="request()->routeIs('roster.students')"
                 wire:navigate
             >
-                {{ __('Students') }}
+                {{ __('Student Roster') }}
+            </flux:sidebar.item>
+            @can('viewAnyAttendance')
+            <flux:sidebar.item
+                icon="clipboard-document-check"
+                :href="route('attendance.students')"
+                :current="request()->routeIs('attendance.students')"
+                wire:navigate
+            >
+                {{ __('Student Attendance') }}
             </flux:sidebar.item>
             @endcan
         </flux:sidebar.group>
+        @endcan
 
-        {{-- Icon-only when collapsed --}}
-        <flux:sidebar.item
-            icon="layout-grid"
-            :href="route('database')"
-            wire:navigate
-            class="hidden in-data-flux-sidebar-on-desktop:in-data-flux-sidebar-collapsed-desktop:flex"
-            aria-hidden="true"
-        >
-            <span class="sr-only">{{ __('Database') }}</span>
-        </flux:sidebar.item>
-        
+        {{-- Volunteers Section --}}
         @can('viewRoster')
-        <flux:sidebar.item
-            icon="users"
-            :href="route('roster.volunteers')"
+        <flux:sidebar.group :heading="__('Volunteers')">
+            <flux:sidebar.item
+                icon="users"
+                :href="route('roster.volunteers')"
+                :current="request()->routeIs('roster.volunteers')"
+                wire:navigate
+            >
+                {{ __('Volunteer Roster') }}
+            </flux:sidebar.item>
+            @can('viewAnyAttendance')
+            <flux:sidebar.item
+                icon="clipboard-document-check"
+                :href="route('attendance.volunteers')"
+                :current="request()->routeIs('attendance.volunteers')"
+                wire:navigate
+            >
+                {{ __('Volunteer Attendance') }}
+            </flux:sidebar.item>
+            @endcan
+        </flux:sidebar.group>
+        @endcan
+
+        {{-- User Section --}}
+        <flux:sidebar.group :heading="__('User')">
+            <flux:sidebar.item
+            icon="user-circle"
+            :href="route('profile.show', ['user' => auth()->user()->id])"
+            :current="request()->routeIs('profile.show*')"
             wire:navigate
-            class="hidden in-data-flux-sidebar-on-desktop:in-data-flux-sidebar-collapsed-desktop:flex"
-            aria-hidden="true"
-        >
-            <span class="sr-only">{{ __('Volunteers') }}</span>
-        </flux:sidebar.item>
+            >
+            {{ __('My Profile') }}
+            </flux:sidebar.item>
+            <flux:sidebar.item
+                icon="clipboard-document-check"
+                :href="route('attendance.user')"
+                :current="request()->routeIs('attendance.user')"
+                wire:navigate
+            >
+                {{ __('My Attendance') }}
+            </flux:sidebar.item>
+        </flux:sidebar.group>
+
+        {{-- Database Section - Hidden from Students and Instructors --}}
+        @if(auth()->user() && !in_array(auth()->user()->role_id, [4, 5]))
+        <flux:sidebar.group :heading="__('Database')">
+            <flux:sidebar.item
+                icon="table-cells"
+                :href="route('database')"
+                :current="request()->routeIs('database*')"
+                wire:navigate
+            >
+                {{ __('Reference Tables') }}
+            </flux:sidebar.item>
+            @can('manageReviewSeason')
+            <flux:sidebar.item
+                icon="calendar"
+                :href="route('reviewseason')"
+                :current="request()->routeIs('reviewseason')"
+                wire:navigate
+            >
+                {{ __('Review Seasons') }}
+            </flux:sidebar.item>
+            @endcan
+        </flux:sidebar.group>
+        @endif
+
+    </flux:sidebar.nav>
+
+    {{-- Icon-only items when sidebar is collapsed --}}
+    <flux:sidebar.nav class="hidden in-data-flux-sidebar-on-desktop:in-data-flux-sidebar-collapsed-desktop:flex flex-col gap-1">
+        @can('viewRoster')
         <flux:sidebar.item
             icon="academic-cap"
             :href="route('roster.students')"
             wire:navigate
-            class="hidden in-data-flux-sidebar-on-desktop:in-data-flux-sidebar-collapsed-desktop:flex"
             aria-hidden="true"
         >
-            <span class="sr-only">{{ __('Students') }}</span>
+            <span class="sr-only">{{ __('Student Roster') }}</span>
+        </flux:sidebar.item>
+        @can('viewAnyAttendance')
+        <flux:sidebar.item
+            icon="clipboard-document-check"
+            :href="route('attendance.students')"
+            wire:navigate
+            aria-hidden="true"
+        >
+            <span class="sr-only">{{ __('Student Attendance') }}</span>
         </flux:sidebar.item>
         @endcan
-
+        
+        <flux:sidebar.item
+            icon="users"
+            :href="route('roster.volunteers')"
+            wire:navigate
+            aria-hidden="true"
+        >
+            <span class="sr-only">{{ __('Volunteer Roster') }}</span>
+        </flux:sidebar.item>
+        @can('viewAnyAttendance')
+        <flux:sidebar.item
+            icon="clipboard-document-check"
+            :href="route('attendance.volunteers')"
+            wire:navigate
+            aria-hidden="true"
+        >
+            <span class="sr-only">{{ __('Volunteer Attendance') }}</span>
+        </flux:sidebar.item>
+        @endcan
+        @endcan
+        
+        <flux:sidebar.item
+            icon="user-circle"
+            :href="route('profile.show')"
+            wire:navigate
+            aria-hidden="true"
+        >
+            <span class="sr-only">{{ __('My Profile') }}</span>
+        </flux:sidebar.item>
+        <flux:sidebar.item
+            icon="clipboard-document-check"
+            :href="route('attendance.user')"
+            wire:navigate
+            aria-hidden="true"
+        >
+            <span class="sr-only">{{ __('My Attendance') }}</span>
+        </flux:sidebar.item>
+        
+        @if(auth()->user() && !in_array(auth()->user()->role_id, [4, 5]))
+        <flux:sidebar.item
+            icon="table-cells"
+            :href="route('database')"
+            wire:navigate
+            aria-hidden="true"
+        >
+            <span class="sr-only">{{ __('Reference Tables') }}</span>
+        </flux:sidebar.item>
+        @can('manageReviewSeason')
+        <flux:sidebar.item
+            icon="calendar"
+            :href="route('reviewseason')"
+            wire:navigate
+            aria-hidden="true"
+        >
+            <span class="sr-only">{{ __('Review Seasons') }}</span>
+        </flux:sidebar.item>
+        @endcan
+        @endif
     </flux:sidebar.nav>
 
     <flux:spacer />
@@ -257,16 +368,44 @@
         if (request()->routeIs('roster.volunteers')) {
             $topbarLinks = [
                 ['label' => 'Dashboard', 'href' => route('dashboard'), 'current' => false],
-                ['label' => 'Roster', 'href' => route('roster.volunteers'), 'current' => false],
-                ['label' => 'Volunteers', 'href' => route('roster.volunteers'), 'current' => true],
+                ['label' => 'Volunteers', 'href' => route('roster.volunteers'), 'current' => false],
+                ['label' => 'Volunteer Roster', 'href' => route('roster.volunteers'), 'current' => true],
             ];
         } elseif (request()->routeIs('roster.students')) {
             $topbarLinks = [
                 ['label' => 'Dashboard', 'href' => route('dashboard'), 'current' => false],
-                ['label' => 'Roster', 'href' => route('roster.volunteers'), 'current' => false],
-                ['label' => 'Students', 'href' => route('roster.students'), 'current' => true],
+                ['label' => 'Students', 'href' => route('roster.students'), 'current' => false],
+                ['label' => 'Student Roster', 'href' => route('roster.students'), 'current' => true],
             ];
         }
+    } elseif (request()->routeIs('attendance.*')) {
+        // Attendance pages
+        if (request()->routeIs('attendance.volunteers')) {
+            $topbarLinks = [
+                ['label' => 'Dashboard', 'href' => route('dashboard'), 'current' => false],
+                ['label' => 'Volunteers', 'href' => route('roster.volunteers'), 'current' => false],
+                ['label' => 'Volunteer Attendance', 'href' => route('attendance.volunteers'), 'current' => true],
+            ];
+        } elseif (request()->routeIs('attendance.students')) {
+            $topbarLinks = [
+                ['label' => 'Dashboard', 'href' => route('dashboard'), 'current' => false],
+                ['label' => 'Students', 'href' => route('roster.students'), 'current' => false],
+                ['label' => 'Student Attendance', 'href' => route('attendance.students'), 'current' => true],
+            ];
+        } elseif (request()->routeIs('attendance.user')) {
+            $topbarLinks = [
+                ['label' => 'Dashboard', 'href' => route('dashboard'), 'current' => false],
+                ['label' => 'User', 'href' => route('profile.show'), 'current' => false],
+                ['label' => 'My Attendance', 'href' => route('attendance.user'), 'current' => true],
+            ];
+        }
+    } elseif (request()->routeIs('reviewseason')) {
+        // Review season page
+        $topbarLinks = [
+            ['label' => 'Dashboard', 'href' => route('dashboard'), 'current' => false],
+            ['label' => 'Database', 'href' => route('database'), 'current' => false],
+            ['label' => 'Review Seasons', 'href' => route('reviewseason'), 'current' => true],
+        ];
     } elseif (request()->routeIs('profile.*')) {
         // Settings routes
         if (request()->routeIs('profile.edit')) {

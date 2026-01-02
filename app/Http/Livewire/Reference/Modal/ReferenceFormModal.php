@@ -127,7 +127,14 @@ class ReferenceFormModal extends Component
     public function render()
     {
         // resolvedFields should already be populated in mount/create/edit
-        return view('livewire.reference.modal.form-modal', ['fields' => $this->resolvedFields]);
+        $actionLabel = $this->selectedId ? 'Edit' : 'Create';
+        $tableLabel = $this->configKey ? Str::title(str_replace('_', ' ', $this->configKey)) : null;
+
+        return view('livewire.reference.modal.form-modal', [
+            'fields' => $this->resolvedFields,
+            'actionLabel' => $actionLabel,
+            'tableLabel' => $tableLabel,
+        ]);
     }
 
     protected function resolveOptions(array $source): array

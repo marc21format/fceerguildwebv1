@@ -1,5 +1,9 @@
 import '../../vendor/masmerise/livewire-toaster/resources/js';
 import { createIcons, Menu, X, CornerDownLeft, Undo, Undo2 } from 'lucide';
+import Chart from 'chart.js/auto';
+
+// Make Chart globally available
+window.Chart = Chart;
 
 function registerIcons(root = document) {
   createIcons({
